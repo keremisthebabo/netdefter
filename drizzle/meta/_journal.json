@@ -1,0 +1,34 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1789220457819,
+      "tag": "0000_hard_nightcrawler",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1789226000000,
+      "tag": "0001_spaced_repetition",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1789230000000,
+      "tag": "0002_study_notes",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1789232000000,
+      "tag": "0003_profiles",
+      "breakpoints": true
+    }
+  ]
+}

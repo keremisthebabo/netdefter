@@ -1,0 +1,2 @@
+import {owner,mine,bindings,failure,AppError} from '@/lib/server';
+export async function GET(req:Request,{params}:{params:Promise<{id:string}>}){try{const user=await owner(req);const row=await mine((await params).id,user);if(!row.image_key)throw new AppError('Fotoğraf bulunamadı.',404);const obj=await bindings().BUCKET.get(String(row.image_key));if(!obj)throw new AppError('Fotoğraf bulunamadı.',404);return new Response(obj.body,{headers:{'Content-Type':String(row.mime),'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'}})}catch(e){return failure(e)}}

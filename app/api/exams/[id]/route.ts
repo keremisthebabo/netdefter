@@ -1,0 +1,2 @@
+import {owner,db,failure,AppError} from '@/lib/server';
+export async function DELETE(req:Request,{params}:{params:Promise<{id:string}>}){try{const user=await owner(req);const {id}=await params;const r=await db().prepare('DELETE FROM exams WHERE id=? AND user_id=?').bind(id,user).run();if(!r.meta.changes)throw new AppError('Deneme bulunamadı.',404);return Response.json({deleted:true})}catch(e){return failure(e)}}
