@@ -1,6 +1,6 @@
 "use client";
 import {useEffect,useRef,useState} from 'react';
-import {Sparkles,Bell,Download,ArrowUpRight,DatabaseBackup,Upload,LoaderCircle,LogOut,UserRound,Check,KeyRound,Trash2,ShieldCheck,CalendarDays,Wand2,BellRing,Database,RefreshCw,Copy,Unplug,Building2,UserPlus,Plus,Terminal,AlertCircle} from 'lucide-react';
+import {Sparkles,Bell,Download,ArrowUpRight,DatabaseBackup,Upload,LoaderCircle,LogOut,UserRound,Check,KeyRound,Trash2,ShieldCheck,CalendarDays,Wand2,BellRing,Database,RefreshCw,Copy,Unplug,Building2,UserPlus,Plus,Terminal,AlertCircle,Users,Search} from 'lucide-react';
 import {AlertDialog,AlertDialogContent,AlertDialogHeader,AlertDialogTitle,AlertDialogDescription,AlertDialogFooter,AlertDialogCancel} from '@/components/ui/alert-dialog';
 import {toast} from 'sonner';
 import {daysUntil,estimatedExamDate,initials,type Profile} from '@/lib/study';
@@ -30,11 +30,13 @@ CREATE TABLE IF NOT EXISTS public.study_notes (id text PRIMARY KEY,user_id text 
 CREATE TABLE IF NOT EXISTS public.profiles (user_id text PRIMARY KEY,name text NOT NULL,grade text NOT NULL DEFAULT '10',target text NOT NULL DEFAULT '',exam_year integer NOT NULL DEFAULT 2028,exam_date text NOT NULL DEFAULT '2028-06-17',motto text NOT NULL DEFAULT '',daily_goal integer NOT NULL DEFAULT 0,school text NOT NULL DEFAULT '',updated_at text NOT NULL);
 CREATE TABLE IF NOT EXISTS public.ai_usage (user_id text NOT NULL,day text NOT NULL,kind text NOT NULL,count integer NOT NULL DEFAULT 0,PRIMARY KEY (user_id, day, kind));
 CREATE TABLE IF NOT EXISTS public.auth_attempts (key text PRIMARY KEY,count integer NOT NULL DEFAULT 0,reset_at text NOT NULL);
+CREATE TABLE IF NOT EXISTS public.password_resets (email text PRIMARY KEY,code_hash text NOT NULL,expires_at text NOT NULL,attempts integer NOT NULL DEFAULT 0,created_at text NOT NULL);
 CREATE TABLE IF NOT EXISTS public.study_plans (user_id text PRIMARY KEY,config text NOT NULL,done text NOT NULL DEFAULT '{}',off_days text NOT NULL DEFAULT '{}',created_at text NOT NULL,updated_at text NOT NULL);
 INSERT INTO storage.buckets (id, name, public) VALUES ('question-images', 'question-images', false) ON CONFLICT (id) DO NOTHING;`;
 
-type AiStatus={connected:boolean;source:'env'|'runtime'|'none';model:string;maskedKey:string;youtubeConnected:boolean;youtubeMaskedKey?:string};
-type SupaState={connected:boolean;url:string;maskedKey?:string;keyType?:string;source:'env'|'runtime'|'none';tablesReady:boolean;authReady?:boolean;tenantReady?:boolean;synced?:number;message:string;ai?:AiStatus};
+type AiStatus={connected:boolean;source:'env'|'runtime'|'none';model:string;maskedKey:string;youtubeConnected:boolean;youtubeMaskedKey?:string;resendConnected?:boolean;resendMaskedKey?:string};
+type RegisteredUser={id:string;email:string;name:string;developer:boolean;hasPassword:boolean;google:boolean;tenantId:string;tenantName:string;grade:string;target:string;school:string;examYear:number;questionCount:number;examCount:number;hasPlan:boolean;createdAt:string;lastLoginAt:string|null};
+type SupaState={connected:boolean;url:string;maskedKey?:string;keyType?:string;source:'env'|'runtime'|'none';tablesReady:boolean;authReady?:boolean;tenantReady?:boolean;synced?:number;message:string;ai?:AiStatus;users?:RegisteredUser[]};
 type TenantItem={id:string;name:string;slug:string;role:'owner'|'admin'|'member';plan:string;ownerId:string;createdAt:string};
 type TenantMember={userId:string;email:string;name:string;role:'owner'|'admin'|'member';createdAt:string};
 type TenantPayload={active:TenantItem;tenants:TenantItem[];members:TenantMember[];authProvider:'supabase'|'local';message?:string;error?:string};
@@ -44,7 +46,8 @@ const roleLabel:Record<string,string>={owner:'Sahip',admin:'Yönetici',member:'�
 
 export function SettingsView(){const s=useStudy();const {ai,youtube,user}=s;const isDev=!!user?.developer;const fileInput=useRef<HTMLInputElement>(null);const [restoring,setRestoring]=useState(false);const [form,setForm]=useState<Profile>(s.profile);const [saving,setSaving]=useState(false);const [pw,setPw]=useState({current:'',next:''}),[pwBusy,setPwBusy]=useState(false),[del,setDel]=useState(false),[delForm,setDelForm]=useState({confirm:'',password:''}),[delBusy,setDelBusy]=useState(false);
  const [supa,setSupa]=useState<SupaState|null>(null),[supaForm,setSupaForm]=useState({url:'',key:''}),[supaBusy,setSupaBusy]=useState(false),[supaNotice,setSupaNotice]=useState<NoticeBox>(null);
- const [aiForm,setAiForm]=useState({openaiKey:'',openaiModel:'gpt-4o-mini',youtubeKey:''}),[aiBusy,setAiBusy]=useState(false),[aiNotice,setAiNotice]=useState<NoticeBox>(null);
+ const [aiForm,setAiForm]=useState({openaiKey:'',openaiModel:'gpt-4o-mini',youtubeKey:'',resendKey:''}),[aiBusy,setAiBusy]=useState(false),[aiNotice,setAiNotice]=useState<NoticeBox>(null);
+ const [userSearch,setUserSearch]=useState(''),[usersBusy,setUsersBusy]=useState(false);
  const [tState,setTState]=useState<TenantPayload|null>(null),[tBusy,setTBusy]=useState(false),[newTenantName,setNewTenantName]=useState(''),[memberForm,setMemberForm]=useState({email:'',role:'member'});
  useEffect(()=>{setForm(s.profile)},[s.profile]);
  useEffect(()=>{
@@ -70,7 +73,7 @@ export function SettingsView(){const s=useStudy();const {ai,youtube,user}=s;cons
    const d=await r.json() as {ai?:AiStatus;message?:string;error?:string};
    if(!r.ok)throw new Error(d.error||'OpenAI API bağlanamadı.');
    setSupa(prev=>prev?{...prev,ai:d.ai}:{connected:false,url:'',source:'none',tablesReady:false,message:'',ai:d.ai});
-   setAiForm(f=>({...f,openaiKey:'',youtubeKey:''}));
+   setAiForm(f=>({...f,openaiKey:'',youtubeKey:'',resendKey:''}));
    const msg=d.message||'OpenAI API başarıyla bağlandı!';
    setAiNotice({type:'good',text:msg});
    toast.success(msg);
@@ -173,11 +176,80 @@ export function SettingsView(){const s=useStudy();const {ai,youtube,user}=s;cons
  async function resetPlan(){if(!confirm('Ders çalışma programın silinsin mi? Tamamlandı ve kaydırma işaretleri de silinir; yanlış arşivin etkilenmez.'))return;try{await api('/api/plan',{method:'DELETE'});s.setPlan(null);toast.success('Program silindi. İstediğin zaman yeniden oluşturabilirsin.')}catch(err){toast.error((err as Error).message)}}
  async function notif(){const r=await askNotificationPermission();toast.message(r==='granted'?'Bildirimlere izin verildi.':r==='unsupported'?'Bu tarayıcı bildirimleri desteklemiyor.':'Bildirim izni verilmedi; tarayıcı ayarlarından açabilirsin.')}
  async function restore(f?:File){if(!f)return;setRestoring(true);try{const text=await f.text();const parsed=JSON.parse(text);if(parsed?.app!=='netudu'&&parsed?.app!=='net-defterim')throw new Error('Bu dosya netudu yedeği değil.');const d=await api('/api/import',{method:'POST',headers:{'Content-Type':'application/json'},body:text});await s.reload();toast.success(`${d.added} kayıt geri yüklendi (${d.received} kayıt okundu; mevcut olanlar korundu).`)}catch(e){toast.error((e as Error).message)}finally{setRestoring(false);if(fileInput.current)fileInput.current.value=''}}
+ async function refreshUsers(){
+  setUsersBusy(true);
+  try{
+   const r=await fetch('/api/supabase',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'list_users'})});
+   const d=await r.json() as {users?:RegisteredUser[];error?:string};
+   if(!r.ok)throw new Error(d.error||'Kullanıcı listesi alınamadı.');
+   setSupa(prev=>prev?{...prev,users:d.users||[]}:null);
+   toast.success(`Kayıtlı kullanıcı listesi güncellendi (${(d.users||[]).length} hesap).`);
+  }catch(err){
+   toast.error((err as Error).message);
+  }finally{
+   setUsersBusy(false);
+  }
+ }
+ const allUsers=supa?.users||[];
+ const filteredUsers=allUsers.filter(u=>{
+  const q=userSearch.trim().toLocaleLowerCase('tr');
+  if(!q)return true;
+  return (u.name||'').toLocaleLowerCase('tr').includes(q)||(u.email||'').toLocaleLowerCase('tr').includes(q)||(u.school||'').toLocaleLowerCase('tr').includes(q)||(u.target||'').toLocaleLowerCase('tr').includes(q)||(u.tenantName||'').toLocaleLowerCase('tr').includes(q);
+ });
  return <div className="settings-grid">
   {isDev&&<>
-   <article className="panel profile-panel"><span className="settings-icon"><Terminal/></span><h2>OpenAI API & Yapay Zekâ Bağlantısı (Developer Özel · netududev@gmail.com)</h2>
+   <article className="panel profile-panel"><span className="settings-icon"><Users/></span><h2>Kayıtlı Kullanıcılar & Hesap Yönetimi (Developer Özel)</h2>
+    <span className="status good">✓ Toplam {allUsers.length} Kayıtlı Hesap · {allUsers.filter(u=>u.developer).length} Developer · {allUsers.filter(u=>u.hasPlan).length} Aktif Program</span>
+    <p className="description">Bu panel yalnızca yetkili geliştirici (<code>yusufykykaya@gmail.com</code>, <code>batur2864@hotmail.com</code>, <code>netududev@gmail.com</code>) hesaplarında görünür. Uygulamada hesap açan tüm kullanıcıları, sınıflarını, çalışma alanlarını ve etkinlik istatistiklerini buradan takip edebilirsin.</p>
+    <div style={{display:'flex',gap:10,flexWrap:'wrap',alignItems:'center',marginBottom:14}}>
+     <div className="search-field" style={{flex:1,minWidth:220}}><Search size={16}/><input placeholder="Kullanıcı adı, e-posta, okul, hedef veya çalışma alanı ara..." value={userSearch} onChange={e=>setUserSearch(e.target.value)}/></div>
+     <button type="button" className="secondary" disabled={usersBusy} onClick={()=>void refreshUsers()}>{usersBusy?<LoaderCircle className="spin" size={16}/>:<RefreshCw size={16}/>} Listeyi Yenile ({filteredUsers.length}/{allUsers.length})</button>
+    </div>
+    {filteredUsers.length===0?(
+     <p className="muted" style={{padding:'12px 0'}}>Aramana uygun kayıtlı kullanıcı bulunamadı.</p>
+    ):(
+     <div className="table-scroll" style={{display:'block',maxHeight:420,overflowY:'auto',border:'1px solid #333a41',borderRadius:10}}>
+      <table style={{width:'100%',borderCollapse:'collapse',fontSize:13}}>
+       <thead>
+        <tr style={{background:'#1f2428',textAlign:'left',borderBottom:'1px solid #333a41',color:'#8f9aa3'}}>
+         <th style={{padding:'10px 12px'}}>Kullanıcı & E-posta</th>
+         <th style={{padding:'10px 12px'}}>Sınıf · Hedef · Okul</th>
+         <th style={{padding:'10px 12px'}}>Çalışma Alanı (Tenant)</th>
+         <th style={{padding:'10px 12px'}}>Etkinlik</th>
+         <th style={{padding:'10px 12px'}}>Kayıt / Son Giriş</th>
+        </tr>
+       </thead>
+       <tbody>
+        {filteredUsers.map(u=>(
+         <tr key={u.id} style={{borderBottom:'1px solid #2c3238'}}>
+          <td style={{padding:'10px 12px'}}>
+           <strong style={{display:'block',color:'#e7eaed'}}>{u.name} {u.developer&&<span className="tag">Developer</span>} {u.google&&<span className="tag">Google</span>}</strong>
+           <small style={{color:'#9aa5ae'}}>{u.email}</small>
+          </td>
+          <td style={{padding:'10px 12px',color:'#c3ccd3'}}>
+           <span>{u.grade==='Mezun'?'Mezun':`${u.grade}. sınıf`} · YKS {u.examYear}</span>
+           {(u.target||u.school)&&<small style={{display:'block',color:'#9aa5ae'}}>{[u.target,u.school].filter(Boolean).join(' · ')}</small>}
+          </td>
+          <td style={{padding:'10px 12px',color:'#c3ccd3'}}>{u.tenantName}</td>
+          <td style={{padding:'10px 12px',color:'#c3ccd3'}}>
+           <b>{u.questionCount}</b> soru · <b>{u.examCount}</b> deneme
+           <small style={{display:'block',color:u.hasPlan?'#5fd0b6':'#9aa5ae'}}>{u.hasPlan?'✓ Programı aktif':'Program oluşturmadı'}</small>
+          </td>
+          <td style={{padding:'10px 12px',color:'#9aa5ae',fontSize:12}}>
+           <div>Kayıt: {u.createdAt?new Date(u.createdAt).toLocaleDateString('tr-TR',{day:'numeric',month:'short',year:'numeric'}):'—'}</div>
+           <div>Son: {u.lastLoginAt?new Date(u.lastLoginAt).toLocaleString('tr-TR',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'—'}</div>
+          </td>
+         </tr>
+        ))}
+       </tbody>
+      </table>
+     </div>
+    )}
+   </article>
+
+   <article className="panel profile-panel"><span className="settings-icon"><Terminal/></span><h2>OpenAI API & Yapay Zekâ Bağlantısı (Developer Özel)</h2>
     <span className={'status '+(ai?'good':'pending')}>{ai?`✓ OpenAI API Bağlı (${supa?.ai?.model||'gpt-4o-mini'}${supa?.ai?.maskedKey?' · '+supa.ai.maskedKey:''})`:'OpenAI API Henüz Bağlanmadı'}</span>
-    <p className="description">Bu panel yalnızca geliştirici hesabıyla (<code>netududev@gmail.com</code>) giriş yapıldığında görünür. OpenAI API anahtarını bağladığında tüm kullanıcılar için fotoğraftan soru çözümü, ders notu üretimi ve aylık rapor aktif olur.</p>
+    <p className="description">Bu panel yalnızca yetkili geliştirici hesaplarıyla (<code>yusufykykaya@gmail.com</code>, <code>batur2864@hotmail.com</code>, <code>netududev@gmail.com</code>) giriş yapıldığında görünür. OpenAI API anahtarını bağladığında tüm kullanıcılar için fotoğraftan soru çözümü, ders notu üretimi ve aylık rapor aktif olur.</p>
     {aiBusy&&<div className="verify good" role="status"><LoaderCircle className="spin" size={18}/><span>OpenAI API anahtarı doğrulanıyor ve sunucuya kaydediliyor...</span></div>}
     {!aiBusy&&aiNotice&&<div className={'verify '+aiNotice.type} role="alert">{aiNotice.type==='good'?<Check size={18}/>:<AlertCircle size={18}/>}<span><b>{aiNotice.type==='good'?'Bağlantı Aktif: ':'Bağlantı Hatası: '}</b>{aiNotice.text}</span></div>}
     {ai&&<ul className="kv">
@@ -185,6 +257,7 @@ export function SettingsView(){const s=useStudy();const {ai,youtube,user}=s;cons
      <li><span>Kayıtlı OpenAI API Anahtarı</span><b><code>{supa?.ai?.maskedKey||'Kayıtlı'}</code></b></li>
      <li><span>Aktif Yapay Zekâ Modeli</span><b><code>{supa?.ai?.model||'gpt-4o-mini'}</code></b></li>
      <li><span>YouTube Data API v3</span><b>{youtube?`✓ Bağlı (${supa?.ai?.youtubeMaskedKey||'Kayıtlı'})`:'Varsayılan Müfredat Videoları Aktif'}</b></li>
+     <li><span>Resend E-posta Servisi (Şifre Sıfırlama Kodu)</span><b>{supa?.ai?.resendConnected?`✓ Bağlı (${supa.ai.resendMaskedKey||'Kayıtlı'})`:'Supabase Auth / Hızlı Kod Aktif'}</b></li>
      <li><span>Aktif Özellikler</span><b>Fotoğraftan Soru Çözümü · Ders Notu · Aylık Rapor</b></li>
     </ul>}
     <form onSubmit={saveOpenAi} className="pw-form">
@@ -192,6 +265,7 @@ export function SettingsView(){const s=useStudy();const {ai,youtube,user}=s;cons
       <label>OpenAI API Key (sk-...)<input required type="password" placeholder={ai?`Mevcut anahtar bağlı (${supa?.ai?.maskedKey||'sk-...'}) — değiştirmek için yeni gir`:'sk-proj-...'} value={aiForm.openaiKey} onChange={e=>setAiForm({...aiForm,openaiKey:e.target.value})}/></label>
       <label>OpenAI Model<input required placeholder="gpt-4o-mini" value={aiForm.openaiModel} onChange={e=>setAiForm({...aiForm,openaiModel:e.target.value})}/></label>
       <label>YouTube Data API v3 Key <small>(isteğe bağlı)</small><input type="password" placeholder={youtube?`Mevcut anahtar bağlı (${supa?.ai?.youtubeMaskedKey||'AIza...'})`:'AIzaSy...'} value={aiForm.youtubeKey} onChange={e=>setAiForm({...aiForm,youtubeKey:e.target.value})}/></label>
+      <label>Resend E-posta API Key <small>(isteğe bağlı · re_...)</small><input type="password" placeholder={supa?.ai?.resendConnected?`Mevcut bağlı (${supa?.ai?.resendMaskedKey||'re_...'})`:'re_... (Şifre sıfırlama e-postaları için)'} value={aiForm.resendKey} onChange={e=>setAiForm({...aiForm,resendKey:e.target.value})}/></label>
      </div>
      <div className="actions wrap">
       <button type="submit" className="primary" disabled={aiBusy}>{aiBusy?<LoaderCircle className="spin" size={16}/>:<Check size={16}/>} {ai?'OpenAI API bağlantısını güncelle':'OpenAI API bağla ve doğrula'}</button>
@@ -200,9 +274,9 @@ export function SettingsView(){const s=useStudy();const {ai,youtube,user}=s;cons
     </form>
    </article>
 
-   <article className="panel profile-panel"><span className="settings-icon"><Database/></span><h2>Supabase Auth, Multi-Tenant & Arka Uç Bağlantısı (Developer Özel · netududev@gmail.com)</h2>
+   <article className="panel profile-panel"><span className="settings-icon"><Database/></span><h2>Supabase Auth, Multi-Tenant & Arka Uç Bağlantısı (Developer Özel)</h2>
     <span className={'status '+(supa?.connected?'good':'pending')}>{supa?.connected?(supa.tablesReady?'✓ Supabase Bağlı ve Aktif (Auth + Tenant RLS + PostgreSQL + Storage)':'✓ Supabase Bağlı (Auth Aktif · Tablo Şeması Bekleniyor)'):'Yerel D1 (SQLite) Modu'}</span>
-    <p className="description">Supabase bağlantısı yalnızca geliştirici hesabıyla (<code>netududev@gmail.com</code>) yapılandırılabilir. Supabase Project URL ve API anahtarını girdiğinde tüm kimlik doğrulama (Authentication), çalışma alanı (Tenant) yönetimi ve veriler Supabase üzerinde yürütülür.</p>
+    <p className="description">Supabase bağlantısı yalnızca yetkili geliştirici hesaplarıyla (<code>yusufykykaya@gmail.com</code>, <code>batur2864@hotmail.com</code>, <code>netududev@gmail.com</code>) yapılandırılabilir. Supabase Project URL ve API anahtarını girdiğinde tüm kimlik doğrulama (Authentication), çalışma alanı (Tenant) yönetimi ve veriler Supabase üzerinde yürütülür.</p>
     {supaBusy&&<div className="verify good" role="status"><LoaderCircle className="spin" size={18}/><span>Supabase sunucusuna bağlanılıyor, Project URL ve API anahtarı test ediliyor...</span></div>}
     {!supaBusy&&supaNotice&&<div className={'verify '+supaNotice.type} role="alert">{supaNotice.type==='good'?<Check size={18}/>:<AlertCircle size={18}/>}<span><b>{supaNotice.type==='good'?'Supabase Bağlandı: ':'Supabase Bağlantı Uyarısı: '}</b>{supaNotice.text}</span></div>}
     {supa?.connected&&<ul className="kv">
@@ -279,7 +353,7 @@ export function SettingsView(){const s=useStudy();const {ai,youtube,user}=s;cons
   <article className="panel"><span className="settings-icon"><DatabaseBackup/></span><h2>Yedekle ve geri yükle</h2><p className="description">Tüm sorularını, çözümleri, tekrar geçmişini, aylık rapor ve deneme sonuçlarını tek bir JSON dosyası olarak indir. Fotoğraflar yedeğe dahil değildir; çözüm metinleri ve okunan soru metni korunur.</p><div className="actions wrap"><a className="secondary" href="/api/export" download><Download size={16}/> Yedeği indir</a><button className="secondary" disabled={restoring} onClick={()=>fileInput.current?.click()}>{restoring?<LoaderCircle className="spin" size={16}/>:<Upload size={16}/>} Geri yükle</button><input ref={fileInput} type="file" accept="application/json,.json" className="sr-only" aria-label="Yedek dosyası" onChange={e=>void restore(e.target.files?.[0])}/></div><p className="inline-note">Geri yüklemede aynı kimlikli kayıtlar atlanır; mevcut verin silinmez.</p></article>
   <article className="panel"><span className="settings-icon"><Download/></span><h2>Arşiv ve çıktı</h2><p className="description">"Yanlış arşivim" sayfasında filtreleri uygulayıp <b>Excel (.xlsx)</b> ile gerçek Excel dosyası (soru listesi + konu özeti sayfaları) al. "Yazdır / PDF" ile soruları, fotoğrafları, çözümleri ve notları A4 düzeninde yazdır veya PDF olarak kaydet.</p><button className="secondary" onClick={()=>s.setView('archive')}>Yanlış arşivime git <ArrowUpRight size={16}/></button></article>
   <article className="panel account-panel"><span className="settings-icon"><ShieldCheck/></span><h2>Hesap ve güvenlik</h2><p className="description">Giriş yapan hesap: <b>{user?.email}</b>{isDev?<span className="tag">Developer</span>:null}{user?.google?<span className="tag">Google bağlı</span>:null} <span className="tag">{user?.authProvider==='supabase'?'Supabase Auth':'Yerel Auth'}</span>. Aktif çalışma alanı: <b>{tState?.active?.name||user?.tenantName||'Kişisel Çalışma Alanı'}</b>.</p>
-   {!isDev&&<form onSubmit={changePassword} className="pw-form"><h3><KeyRound size={16}/> {user?.hasPassword?'Şifreyi değiştir':'Şifre oluştur'}</h3>{!user?.hasPassword&&<p className="muted">Google ile giriş yaptın; istersen e-posta ve şifreyle de girebilmek için bir şifre oluştur.</p>}<div className="form-grid">{user?.hasPassword&&<label>Mevcut şifre<input type="password" autoComplete="current-password" required value={pw.current} onChange={e=>setPw({...pw,current:e.target.value})}/></label>}<label>Yeni şifre<input type="password" autoComplete="new-password" required minLength={8} placeholder="En az 8 karakter, harf ve rakam" value={pw.next} onChange={e=>setPw({...pw,next:e.target.value})}/></label></div><button type="submit" className="secondary" disabled={pwBusy}>{pwBusy?<LoaderCircle className="spin" size={16}/>:<Check size={16}/>} Kaydet</button></form>}
+   {user?.email!=='netududev@gmail.com'&&<form onSubmit={changePassword} className="pw-form"><h3><KeyRound size={16}/> {user?.hasPassword?'Şifreyi değiştir':'Şifre oluştur'}</h3>{!user?.hasPassword&&<p className="muted">Google ile giriş yaptın; istersen e-posta ve şifreyle de girebilmek için bir şifre oluştur.</p>}<div className="form-grid">{user?.hasPassword&&<label>Mevcut şifre<input type="password" autoComplete="current-password" required value={pw.current} onChange={e=>setPw({...pw,current:e.target.value})}/></label>}<label>Yeni şifre<input type="password" autoComplete="new-password" required minLength={8} placeholder="En az 8 karakter, harf ve rakam" value={pw.next} onChange={e=>setPw({...pw,next:e.target.value})}/></label></div><button type="submit" className="secondary" disabled={pwBusy}>{pwBusy?<LoaderCircle className="spin" size={16}/>:<Check size={16}/>} Kaydet</button></form>}
    <div className="actions wrap account-actions"><button className="secondary" onClick={()=>void s.logout()}><LogOut size={16}/> Çıkış yap</button>{!isDev&&<button className="danger-button inline" onClick={()=>setDel(true)}><Trash2 size={16}/> Hesabımı sil</button>}</div></article>
   <AlertDialog open={del} onOpenChange={v=>{if(!delBusy){setDel(v);setDelForm({confirm:'',password:''})}}}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Hesabın kalıcı olarak silinsin mi?</AlertDialogTitle><AlertDialogDescription>Tüm soruların, fotoğrafların, çözümlerin, notların, raporların ve deneme sonuçların silinir. Bu işlem geri alınamaz. İstersen önce "Yedeği indir" ile yedek al.</AlertDialogDescription></AlertDialogHeader>
    <div className="form-grid single">{user?.hasPassword&&<label>Şifren<input type="password" autoComplete="current-password" value={delForm.password} onChange={e=>setDelForm({...delForm,password:e.target.value})}/></label>}<label>Onaylamak için <b>SİL</b> yaz<input value={delForm.confirm} onChange={e=>setDelForm({...delForm,confirm:e.target.value})} placeholder="SİL"/></label></div>

@@ -1,17 +1,19 @@
 import {env} from 'cloudflare:workers';
 import {getSupabaseConfig,setRuntimeSupabaseConfig,createSupabaseD1,createSupabaseBucket,supabaseAuthGetUser,ensureUserTenant} from './supabase';
 export class AppError extends Error{constructor(message:string,public status=400){super(message)}}
-export type Bindings={DB:D1Database;BUCKET:R2Bucket;OPENAI_API_KEY?:string;OPENAI_MODEL?:string;YOUTUBE_API_KEY?:string;GOOGLE_CLIENT_ID?:string;GOOGLE_CLIENT_SECRET?:string;APP_URL?:string;ADMIN_EMAILS?:string;AI_LIMIT_SOLVE?:string;AI_LIMIT_NOTE?:string;AI_LIMIT_REPORT?:string;AI_LIMIT_VIDEO?:string;REGISTRATION_OPEN?:string;SUPABASE_URL?:string;SUPABASE_SERVICE_ROLE_KEY?:string;SUPABASE_ANON_KEY?:string;SUPABASE_KEY?:string};
+export type Bindings={DB:D1Database;BUCKET:R2Bucket;OPENAI_API_KEY?:string;OPENAI_MODEL?:string;YOUTUBE_API_KEY?:string;RESEND_API_KEY?:string;GOOGLE_CLIENT_ID?:string;GOOGLE_CLIENT_SECRET?:string;APP_URL?:string;ADMIN_EMAILS?:string;AI_LIMIT_SOLVE?:string;AI_LIMIT_NOTE?:string;AI_LIMIT_REPORT?:string;AI_LIMIT_VIDEO?:string;REGISTRATION_OPEN?:string;SUPABASE_URL?:string;SUPABASE_SERVICE_ROLE_KEY?:string;SUPABASE_ANON_KEY?:string;SUPABASE_KEY?:string};
 
 export const DEVELOPER_EMAIL='netududev@gmail.com';
-export function isDeveloper(email:string){return (email||'').trim().toLowerCase()===DEVELOPER_EMAIL}
+export const DEVELOPER_EMAILS=['netududev@gmail.com','yusufykykaya@gmail.com','batur2864@hotmail.com'] as const;
+export function isDeveloper(email:string){return DEVELOPER_EMAILS.includes((email||'').trim().toLowerCase() as any)}
 
-let runtimeAiConfig:{openaiKey?:string;openaiModel?:string;youtubeKey?:string}={};
-export function setRuntimeAiConfig(cfg:{openaiKey?:string;openaiModel?:string;youtubeKey?:string}|null){
+let runtimeAiConfig:{openaiKey?:string;openaiModel?:string;youtubeKey?:string;resendKey?:string}={};
+export function setRuntimeAiConfig(cfg:{openaiKey?:string;openaiModel?:string;youtubeKey?:string;resendKey?:string}|null){
  runtimeAiConfig=cfg?{
   openaiKey:cfg.openaiKey?.trim()||undefined,
   openaiModel:cfg.openaiModel?.trim()||undefined,
-  youtubeKey:cfg.youtubeKey?.trim()||undefined
+  youtubeKey:cfg.youtubeKey?.trim()||undefined,
+  resendKey:cfg.resendKey?.trim()||undefined
  }:{};
 }
 export function getRuntimeAiConfig(){return runtimeAiConfig}
@@ -26,7 +28,8 @@ export function bindings():Bindings{
   ...raw,
   OPENAI_API_KEY:runtimeAiConfig.openaiKey||raw.OPENAI_API_KEY,
   OPENAI_MODEL:runtimeAiConfig.openaiModel||raw.OPENAI_MODEL||'gpt-4o-mini',
-  YOUTUBE_API_KEY:runtimeAiConfig.youtubeKey||raw.YOUTUBE_API_KEY
+  YOUTUBE_API_KEY:runtimeAiConfig.youtubeKey||raw.YOUTUBE_API_KEY,
+  RESEND_API_KEY:runtimeAiConfig.resendKey||raw.RESEND_API_KEY
  };
  if(!supa)return merged;
  return {...merged,DB:createSupabaseD1(supa,raw.DB||null),BUCKET:createSupabaseBucket(supa,raw.BUCKET||null)};
@@ -54,16 +57,17 @@ export function ensureSchema(){if(!schemaReady)schemaReady=(async()=>{const d=lo
  if(!scols.has('tenant_id'))await add('sessions','tenant_id','text');
  if(!scols.has('sb_access_token'))await add('sessions','sb_access_token','text');
  if(!scols.has('sb_refresh_token'))await add('sessions','sb_refresh_token','text');
- // Geliştirici (netududev@gmail.com) tarafından kaydedilmiş API bağlantı bilgisi varsa yükle
+ // Geliştirici hesapları tarafından kaydedilmiş API bağlantı bilgisi varsa yükle
  try{
-  const cfgRows=((await d.prepare("SELECT key,value FROM sys_config WHERE key IN ('supabase_url','supabase_key','openai_api_key','openai_model','youtube_api_key')").all()).results||[]) as {key:string;value:string}[];
+  const cfgRows=((await d.prepare("SELECT key,value FROM sys_config WHERE key IN ('supabase_url','supabase_key','openai_api_key','openai_model','youtube_api_key','resend_api_key')").all()).results||[]) as {key:string;value:string}[];
   const url=cfgRows.find(r=>r.key==='supabase_url')?.value||'';
   const key=cfgRows.find(r=>r.key==='supabase_key')?.value||'';
   if(url&&key)setRuntimeSupabaseConfig({url,key});
   const openaiKey=cfgRows.find(r=>r.key==='openai_api_key')?.value||'';
   const openaiModel=cfgRows.find(r=>r.key==='openai_model')?.value||'';
   const youtubeKey=cfgRows.find(r=>r.key==='youtube_api_key')?.value||'';
-  if(openaiKey||openaiModel||youtubeKey)setRuntimeAiConfig({openaiKey,openaiModel,youtubeKey});
+  const resendKey=cfgRows.find(r=>r.key==='resend_api_key')?.value||'';
+  if(openaiKey||openaiModel||youtubeKey||resendKey)setRuntimeAiConfig({openaiKey,openaiModel,youtubeKey,resendKey});
  }catch{}})().catch(e=>{schemaReady=null;throw e});return schemaReady}
 // Hesap ve Multi-Tenant tabloları (drizzle/0004_accounts.sql + supabase/schema.sql ile uyumlu).
 export const accountDDL=[
@@ -76,6 +80,7 @@ export const accountDDL=[
  'CREATE UNIQUE INDEX IF NOT EXISTS users_google_sub ON users (google_sub)',
  'CREATE TABLE IF NOT EXISTS sessions (id text PRIMARY KEY NOT NULL,user_id text NOT NULL,tenant_id text,sb_access_token text,sb_refresh_token text,created_at text NOT NULL,expires_at text NOT NULL,user_agent text DEFAULT \'\' NOT NULL)',
  'CREATE INDEX IF NOT EXISTS sessions_user ON sessions (user_id)',
+ 'CREATE TABLE IF NOT EXISTS password_resets (email text PRIMARY KEY NOT NULL,code_hash text NOT NULL,expires_at text NOT NULL,attempts integer DEFAULT 0 NOT NULL,created_at text NOT NULL)',
  'CREATE TABLE IF NOT EXISTS ai_usage (user_id text NOT NULL,day text NOT NULL,kind text NOT NULL,count integer DEFAULT 0 NOT NULL,PRIMARY KEY(user_id,day,kind))',
  'CREATE TABLE IF NOT EXISTS auth_attempts (key text PRIMARY KEY NOT NULL,count integer DEFAULT 0 NOT NULL,reset_at text NOT NULL)',
  'CREATE TABLE IF NOT EXISTS study_plans (user_id text PRIMARY KEY NOT NULL,config text NOT NULL,done text DEFAULT \'{}\' NOT NULL,off_days text DEFAULT \'{}\' NOT NULL,created_at text NOT NULL,updated_at text NOT NULL)'

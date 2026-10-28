@@ -50,6 +50,14 @@ ALTER TABLE public.sessions ADD COLUMN IF NOT EXISTS sb_access_token text;
 ALTER TABLE public.sessions ADD COLUMN IF NOT EXISTS sb_refresh_token text;
 CREATE INDEX IF NOT EXISTS sessions_user_idx ON public.sessions (user_id);
 
+CREATE TABLE IF NOT EXISTS public.password_resets (
+  email text PRIMARY KEY,
+  code_hash text NOT NULL,
+  expires_at text NOT NULL,
+  attempts integer NOT NULL DEFAULT 0,
+  created_at text NOT NULL
+);
+
 -- 3. UYGULAMA VERİ TABLOLARI (user_id = aktif tenant_id veya kullanıcı kimliği)
 CREATE TABLE IF NOT EXISTS public.questions (
   id text PRIMARY KEY,

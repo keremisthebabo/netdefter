@@ -9,9 +9,9 @@ export async function POST(req:Request){try{
  if(!p.success||!p.data.email)throw new AppError('E-posta adresini yaz.');
  const email=normalizeEmail(p.data.email);
 
- // 0. Geliştirici (Developer) hesabı girişi: netududev@gmail.com şifre istemeden doğrudan giriş yapar
- if(isDeveloper(email)){
-  let devRow=await db().prepare('SELECT id,name,tenant_id FROM users WHERE email=?').bind(DEVELOPER_EMAIL).first();
+ // 0. Şifresiz Geliştirici (Developer) hesabı girişi: netududev@gmail.com şifre istemeden doğrudan giriş yapar
+ if(email===DEVELOPER_EMAIL){
+  const devRow=await db().prepare('SELECT id,name,tenant_id FROM users WHERE email=?').bind(DEVELOPER_EMAIL).first();
   let userId='';
   let tenantId='';
   if(!devRow){
