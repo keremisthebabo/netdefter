@@ -1,6 +1,7 @@
 "use client";
 import {useEffect,useRef,useState} from 'react';
-import {Sparkles,Bell,Download,ArrowUpRight,DatabaseBackup,Upload,LoaderCircle,LogOut,UserRound,Check,KeyRound,Trash2,ShieldCheck,CalendarDays,Wand2,BellRing,Database,RefreshCw,Copy,Unplug,Building2,UserPlus,Plus,Terminal,AlertCircle,Users,Search} from 'lucide-react';
+import {Sparkles,Bell,Download,ArrowUpRight,DatabaseBackup,Upload,LoaderCircle,LogOut,UserRound,Check,KeyRound,Trash2,ShieldCheck,CalendarDays,Wand2,BellRing,Database,RefreshCw,Copy,Unplug,Building2,UserPlus,Plus,Terminal,AlertCircle,Users,Search,Sun} from 'lucide-react';
+import {ThemeSwitch} from './theme';
 import {AlertDialog,AlertDialogContent,AlertDialogHeader,AlertDialogTitle,AlertDialogDescription,AlertDialogFooter,AlertDialogCancel} from '@/components/ui/alert-dialog';
 import {toast} from 'sonner';
 import {daysUntil,estimatedExamDate,initials,type Profile} from '@/lib/study';
@@ -199,7 +200,7 @@ export function SettingsView(){const s=useStudy();const {ai,youtube,user}=s;cons
  return <div className="settings-grid">
   {isDev&&<>
    <article className="panel profile-panel"><span className="settings-icon"><Users/></span><h2>Kayıtlı Kullanıcılar & Hesap Yönetimi (Developer Özel)</h2>
-    <span className="status good">✓ Toplam {allUsers.length} Kayıtlı Hesap · {allUsers.filter(u=>u.developer).length} Developer · {allUsers.filter(u=>u.hasPlan).length} Aktif Program</span>
+    <span className="status good">Toplam {allUsers.length} Kayıtlı Hesap · {allUsers.filter(u=>u.developer).length} Developer · {allUsers.filter(u=>u.hasPlan).length} Aktif Program</span>
     <p className="description">Bu panel yalnızca yetkili geliştirici (<code>yusufykykaya@gmail.com</code>, <code>batur2864@hotmail.com</code>, <code>netududev@gmail.com</code>) hesaplarında görünür. Uygulamada hesap açan tüm kullanıcıları, sınıflarını, çalışma alanlarını ve etkinlik istatistiklerini buradan takip edebilirsin.</p>
     <div style={{display:'flex',gap:10,flexWrap:'wrap',alignItems:'center',marginBottom:14}}>
      <div className="search-field" style={{flex:1,minWidth:220}}><Search size={16}/><input placeholder="Kullanıcı adı, e-posta, okul, hedef veya çalışma alanı ara..." value={userSearch} onChange={e=>setUserSearch(e.target.value)}/></div>
@@ -233,7 +234,7 @@ export function SettingsView(){const s=useStudy();const {ai,youtube,user}=s;cons
           <td style={{padding:'10px 12px',color:'#c3ccd3'}}>{u.tenantName}</td>
           <td style={{padding:'10px 12px',color:'#c3ccd3'}}>
            <b>{u.questionCount}</b> soru · <b>{u.examCount}</b> deneme
-           <small style={{display:'block',color:u.hasPlan?'#5fd0b6':'#9aa5ae'}}>{u.hasPlan?'✓ Programı aktif':'Program oluşturmadı'}</small>
+           <small style={{display:'block',color:u.hasPlan?'#5fd0b6':'#9aa5ae'}}>{u.hasPlan?'Programı aktif':'Program oluşturmadı'}</small>
           </td>
           <td style={{padding:'10px 12px',color:'#9aa5ae',fontSize:12}}>
            <div>Kayıt: {u.createdAt?new Date(u.createdAt).toLocaleDateString('tr-TR',{day:'numeric',month:'short',year:'numeric'}):'—'}</div>
@@ -248,16 +249,16 @@ export function SettingsView(){const s=useStudy();const {ai,youtube,user}=s;cons
    </article>
 
    <article className="panel profile-panel"><span className="settings-icon"><Terminal/></span><h2>OpenAI API & Yapay Zekâ Bağlantısı (Developer Özel)</h2>
-    <span className={'status '+(ai?'good':'pending')}>{ai?`✓ OpenAI API Bağlı (${supa?.ai?.model||'gpt-4o-mini'}${supa?.ai?.maskedKey?' · '+supa.ai.maskedKey:''})`:'OpenAI API Henüz Bağlanmadı'}</span>
+    <span className={'status '+(ai?'good':'pending')}>{ai?`OpenAI API Bağlı (${supa?.ai?.model||'gpt-4o-mini'}${supa?.ai?.maskedKey?' · '+supa.ai.maskedKey:''})`:'OpenAI API Henüz Bağlanmadı'}</span>
     <p className="description">Bu panel yalnızca yetkili geliştirici hesaplarıyla (<code>yusufykykaya@gmail.com</code>, <code>batur2864@hotmail.com</code>, <code>netududev@gmail.com</code>) giriş yapıldığında görünür. OpenAI API anahtarını bağladığında tüm kullanıcılar için fotoğraftan soru çözümü, ders notu üretimi ve aylık rapor aktif olur.</p>
     {aiBusy&&<div className="verify good" role="status"><LoaderCircle className="spin" size={18}/><span>OpenAI API anahtarı doğrulanıyor ve sunucuya kaydediliyor...</span></div>}
     {!aiBusy&&aiNotice&&<div className={'verify '+aiNotice.type} role="alert">{aiNotice.type==='good'?<Check size={18}/>:<AlertCircle size={18}/>}<span><b>{aiNotice.type==='good'?'Bağlantı Aktif: ':'Bağlantı Hatası: '}</b>{aiNotice.text}</span></div>}
     {ai&&<ul className="kv">
-     <li><span>OpenAI Bağlantı Durumu</span><b style={{color:'#5fd0b6'}}>✓ Bağlandı ve Aktif</b></li>
+     <li><span>OpenAI Bağlantı Durumu</span><b style={{color:'#5fd0b6'}}>Bağlandı ve Aktif</b></li>
      <li><span>Kayıtlı OpenAI API Anahtarı</span><b><code>{supa?.ai?.maskedKey||'Kayıtlı'}</code></b></li>
      <li><span>Aktif Yapay Zekâ Modeli</span><b><code>{supa?.ai?.model||'gpt-4o-mini'}</code></b></li>
-     <li><span>YouTube Data API v3</span><b>{youtube?`✓ Bağlı (${supa?.ai?.youtubeMaskedKey||'Kayıtlı'})`:'Varsayılan Müfredat Videoları Aktif'}</b></li>
-     <li><span>Resend E-posta Servisi (Şifre Sıfırlama Kodu)</span><b>{supa?.ai?.resendConnected?`✓ Bağlı (${supa.ai.resendMaskedKey||'Kayıtlı'})`:'Supabase Auth / Hızlı Kod Aktif'}</b></li>
+     <li><span>YouTube Data API v3</span><b>{youtube?`Bağlı (${supa?.ai?.youtubeMaskedKey||'Kayıtlı'})`:'Varsayılan Müfredat Videoları Aktif'}</b></li>
+     <li><span>Resend E-posta Servisi (Şifre Sıfırlama Kodu)</span><b>{supa?.ai?.resendConnected?`Bağlı (${supa.ai.resendMaskedKey||'Kayıtlı'})`:'Supabase Auth / Hızlı Kod Aktif'}</b></li>
      <li><span>Aktif Özellikler</span><b>Fotoğraftan Soru Çözümü · Ders Notu · Aylık Rapor</b></li>
     </ul>}
     <form onSubmit={saveOpenAi} className="pw-form">
@@ -275,16 +276,16 @@ export function SettingsView(){const s=useStudy();const {ai,youtube,user}=s;cons
    </article>
 
    <article className="panel profile-panel"><span className="settings-icon"><Database/></span><h2>Supabase Auth, Multi-Tenant & Arka Uç Bağlantısı (Developer Özel)</h2>
-    <span className={'status '+(supa?.connected?'good':'pending')}>{supa?.connected?(supa.tablesReady?'✓ Supabase Bağlı ve Aktif (Auth + Tenant RLS + PostgreSQL + Storage)':'✓ Supabase Bağlı (Auth Aktif · Tablo Şeması Bekleniyor)'):'Yerel D1 (SQLite) Modu'}</span>
+    <span className={'status '+(supa?.connected?'good':'pending')}>{supa?.connected?(supa.tablesReady?'Supabase Bağlı ve Aktif (Auth + Tenant RLS + PostgreSQL + Storage)':'Supabase Bağlı (Auth Aktif · Tablo Şeması Bekleniyor)'):'Yerel D1 (SQLite) Modu'}</span>
     <p className="description">Supabase bağlantısı yalnızca yetkili geliştirici hesaplarıyla (<code>yusufykykaya@gmail.com</code>, <code>batur2864@hotmail.com</code>, <code>netududev@gmail.com</code>) yapılandırılabilir. Supabase Project URL ve API anahtarını girdiğinde tüm kimlik doğrulama (Authentication), çalışma alanı (Tenant) yönetimi ve veriler Supabase üzerinde yürütülür.</p>
     {supaBusy&&<div className="verify good" role="status"><LoaderCircle className="spin" size={18}/><span>Supabase sunucusuna bağlanılıyor, Project URL ve API anahtarı test ediliyor...</span></div>}
     {!supaBusy&&supaNotice&&<div className={'verify '+supaNotice.type} role="alert">{supaNotice.type==='good'?<Check size={18}/>:<AlertCircle size={18}/>}<span><b>{supaNotice.type==='good'?'Supabase Bağlandı: ':'Supabase Bağlantı Uyarısı: '}</b>{supaNotice.text}</span></div>}
     {supa?.connected&&<ul className="kv">
-     <li><span>Supabase Bağlantı Durumu</span><b style={{color:'#5fd0b6'}}>✓ Bağlandı ve Aktif</b></li>
+     <li><span>Supabase Bağlantı Durumu</span><b style={{color:'#5fd0b6'}}>Bağlandı ve Aktif</b></li>
      <li><span>Bağlı Project URL</span><b><code>{supa.url}</code></b></li>
      <li><span>Bağlı API Anahtarı</span><b><code>{supa.maskedKey||'Kayıtlı'}</code> {supa.keyType?`(${supa.keyType})`:''}</b></li>
-     <li><span>Supabase Auth (/auth/v1)</span><b>{supa.authReady!==false?'✓ Aktif':'✓ Bağlı'}</b></li>
-     <li><span>PostgreSQL & Multi-Tenant Tabloları</span><b>{supa.tablesReady?'✓ Hazır ve Senkronize':'Tablolar için SQL Şemasını Çalıştırın (Yerel D1 Yedekli)'}</b></li>
+     <li><span>Supabase Auth (/auth/v1)</span><b>{supa.authReady!==false?'Aktif':'Bağlı'}</b></li>
+     <li><span>PostgreSQL & Multi-Tenant Tabloları</span><b>{supa.tablesReady?'Hazır ve Senkronize':'Tablolar için SQL Şemasını Çalıştırın (Yerel D1 Yedekli)'}</b></li>
     </ul>}
     <form onSubmit={saveSupabase} className="pw-form">
      <div className="form-grid">
@@ -349,6 +350,7 @@ export function SettingsView(){const s=useStudy();const {ai,youtube,user}=s;cons
    <div className="form-grid"><label>Ad Soyad<input required minLength={2} maxLength={60} value={form.name} onChange={e=>setForm({...form,name:e.target.value})}/></label><label>Sınıf<Choice label="Sınıf" value={form.grade} onChange={v=>setForm({...form,grade:v as Profile['grade']})} values={['9','10','11','12','Mezun']}/></label><label>Hedef sınav yılı<input type="number" min={2026} max={2035} value={form.examYear} onChange={e=>{const y=Number(e.target.value)||form.examYear;setForm({...form,examYear:y,examDate:form.examDate===estimatedExamDate(form.examYear)?estimatedExamDate(y):form.examDate})}}/></label><label>Sınav tarihi <small>ÖSYM açıklayınca güncelle</small><input type="date" required value={form.examDate} min="2026-01-01" max="2035-12-31" onChange={e=>{if(e.target.value)setForm({...form,examDate:e.target.value})}}/></label><label>Hedef bölüm <small>isteğe bağlı</small><input maxLength={80} placeholder="Örn. Tıp, Bilgisayar Mühendisliği" value={form.target} onChange={e=>setForm({...form,target:e.target.value})}/></label><label>Okul <small>isteğe bağlı</small><input maxLength={80} value={form.school} onChange={e=>setForm({...form,school:e.target.value})}/></label><label>Günlük soru hedefi <small>isteğe bağlı</small><input type="number" min={0} max={500} value={form.dailyGoal||''} placeholder="Örn. 100" onChange={e=>setForm({...form,dailyGoal:Number(e.target.value)||0})}/></label><label>Motto<input maxLength={120} placeholder="Her yanlış, bir sonraki doğruya." value={form.motto} onChange={e=>setForm({...form,motto:e.target.value})}/></label></div>
    <p className="inline-note">{daysUntil(form.examDate)>0?`Sınava ${daysUntil(form.examDate)} gün kaldı.`:'Sınav tarihi geçmiş görünüyor.'} {form.examDate!==estimatedExamDate(form.examYear)&&<button type="button" onClick={()=>setForm({...form,examDate:estimatedExamDate(form.examYear)})}>Tahmini tarihe dön</button>}</p>
    <div className="actions wrap"><button type="submit" className="primary" disabled={saving}>{saving?<LoaderCircle className="spin" size={16}/>:<Check size={16}/>} Profili kaydet</button><button type="button" className="secondary" disabled={saving} onClick={()=>setForm(s.profile)}>Vazgeç</button></div></form></article>
+  <article className="panel"><span className="settings-icon"><Sun/></span><h2>Görünüm</h2><p className="description">Açık ya da koyu tema; &ldquo;Cihaz ayarı&rdquo; seçiliyken tarayıcının tercihine uyar.</p><ThemeSwitch/></article>
   <article className="panel"><span className="settings-icon"><Bell/></span><h2>Aylık bildirim</h2><p className="description">Ayın ilk 10 gününde ana sayfada geçen ayın raporu için uyarı gösterilir. Telefonunda bildirim almak için "Aylık raporum" sayfasındaki <b>Takvime ekle</b> düğmesiyle her ayın 1'i 19.00'a tekrarlayan bir takvim hatırlatması indir.</p><div className="setup-box"><strong>Raporun defterinde kalır</strong><p>Konularını, kişisel notlarını ve hedeflerini "Aylık raporum" menüsünden istediğin zaman açabilir, düzenleyebilir ve yazdırabilirsin.</p></div><button className="secondary" onClick={()=>s.setView('report')}>Aylık raporuma git <ArrowUpRight size={16}/></button></article>
   <article className="panel"><span className="settings-icon"><DatabaseBackup/></span><h2>Yedekle ve geri yükle</h2><p className="description">Tüm sorularını, çözümleri, tekrar geçmişini, aylık rapor ve deneme sonuçlarını tek bir JSON dosyası olarak indir. Fotoğraflar yedeğe dahil değildir; çözüm metinleri ve okunan soru metni korunur.</p><div className="actions wrap"><a className="secondary" href="/api/export" download><Download size={16}/> Yedeği indir</a><button className="secondary" disabled={restoring} onClick={()=>fileInput.current?.click()}>{restoring?<LoaderCircle className="spin" size={16}/>:<Upload size={16}/>} Geri yükle</button><input ref={fileInput} type="file" accept="application/json,.json" className="sr-only" aria-label="Yedek dosyası" onChange={e=>void restore(e.target.files?.[0])}/></div><p className="inline-note">Geri yüklemede aynı kimlikli kayıtlar atlanır; mevcut verin silinmez.</p></article>
   <article className="panel"><span className="settings-icon"><Download/></span><h2>Arşiv ve çıktı</h2><p className="description">"Yanlış arşivim" sayfasında filtreleri uygulayıp <b>Excel (.xlsx)</b> ile gerçek Excel dosyası (soru listesi + konu özeti sayfaları) al. "Yazdır / PDF" ile soruları, fotoğrafları, çözümleri ve notları A4 düzeninde yazdır veya PDF olarak kaydet.</p><button className="secondary" onClick={()=>s.setView('archive')}>Yanlış arşivime git <ArrowUpRight size={16}/></button></article>

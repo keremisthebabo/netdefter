@@ -1,7 +1,7 @@
 import {env} from 'cloudflare:workers';
 import {getSupabaseConfig,setRuntimeSupabaseConfig,createSupabaseD1,createSupabaseBucket,supabaseAuthGetUser,ensureUserTenant} from './supabase';
 export class AppError extends Error{constructor(message:string,public status=400){super(message)}}
-export type Bindings={DB:D1Database;BUCKET:R2Bucket;OPENAI_API_KEY?:string;OPENAI_MODEL?:string;YOUTUBE_API_KEY?:string;RESEND_API_KEY?:string;GOOGLE_CLIENT_ID?:string;GOOGLE_CLIENT_SECRET?:string;APP_URL?:string;ADMIN_EMAILS?:string;AI_LIMIT_SOLVE?:string;AI_LIMIT_NOTE?:string;AI_LIMIT_REPORT?:string;AI_LIMIT_VIDEO?:string;REGISTRATION_OPEN?:string;SUPABASE_URL?:string;SUPABASE_SERVICE_ROLE_KEY?:string;SUPABASE_ANON_KEY?:string;SUPABASE_KEY?:string};
+export type Bindings={DB:D1Database;BUCKET:R2Bucket;OPENAI_API_KEY?:string;OPENAI_MODEL?:string;YOUTUBE_API_KEY?:string;RESEND_API_KEY?:string;GOOGLE_CLIENT_ID?:string;GOOGLE_CLIENT_SECRET?:string;APP_URL?:string;ADMIN_EMAILS?:string;AI_LIMIT_SOLVE?:string;AI_LIMIT_NOTE?:string;AI_LIMIT_REPORT?:string;AI_LIMIT_VIDEO?:string;AI_LIMIT_QUOTE?:string;REGISTRATION_OPEN?:string;SUPABASE_URL?:string;SUPABASE_SERVICE_ROLE_KEY?:string;SUPABASE_ANON_KEY?:string;SUPABASE_KEY?:string};
 
 export const DEVELOPER_EMAIL='netududev@gmail.com';
 export const DEVELOPER_EMAILS=['netududev@gmail.com','yusufykykaya@gmail.com','batur2864@hotmail.com'] as const;

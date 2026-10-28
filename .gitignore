@@ -58,3 +58,6 @@ CLAUDE.local.md
 /.cloudflare.json
 # Betik kayıtları
 /*-log.txt
+
+# Impeccable inceleme ekran goruntuleri (yeniden uretilebilir)
+/.impeccable/review/

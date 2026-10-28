@@ -1,9 +1,9 @@
 "use client";
 import {useCallback,useEffect,useState} from 'react';
-import {Check,Undo2,Umbrella,Play,PlusCircle,NotebookPen,Send,AlertTriangle,Dumbbell,School,Pin,BookOpen,Coffee,RefreshCw,ThumbsDown,ExternalLink,LoaderCircle} from 'lucide-react';
+import {Check,Undo2,Umbrella,Play,PlusCircle,NotebookPen,Send,AlertTriangle,Dumbbell,School,Pin,BookOpen,Coffee,RefreshCw,ThumbsDown,ExternalLink,LoaderCircle,Sigma,Zap,FlaskConical,Dna,Globe,FileText,Flag,Target,GraduationCap} from 'lucide-react';
 import {toast} from 'sonner';
 import {Dialog,DialogContent,DialogHeader,DialogTitle,DialogDescription} from '@/components/ui/dialog';
-import {buildDay,noteSubject,subjectIcon,dayShareText,telegramUrl,toMin,type DayPlan,type DayItem,type PlanState,type Lesson} from '@/lib/plan/scheduler';
+import {buildDay,noteSubject,dayShareText,telegramUrl,toMin,type DayPlan,type DayItem,type PlanState,type Lesson} from '@/lib/plan/scheduler';
 import {normalizeTopic,type Video} from '@/lib/study';
 import {useStudy,postJson,videoId,formatViews} from '../shared';
 
@@ -73,9 +73,10 @@ export function LessonVideoDialog({lesson,onClose}:{lesson:Lesson|null;onClose:(
  </DialogContent></Dialog>;
 }
 
-export function LessonHead({day}:{day:DayPlan}){const l=day.lesson;if(day.isOff)return <div className="lesson-head off"><span className="lesson-emoji">🏖️</span><div><span className="eyebrow">KAYDIRILDI</span><h3>Dinlenme / sosyal gün</h3><p>Bu günün dersi bir sonraki güne aktarıldı; program bir gün uzadı.</p></div></div>;
- if(!l)return <div className="lesson-head"><span className="lesson-emoji">{day.finished?'🏁':'📝'}</span><div><span className="eyebrow">{day.finished?'PROGRAM TAMAMLANDI':'SERBEST GÜN'}</span><h3>{day.finished?'Tüm konular bitti — deneme ve eksik kapatma dönemi':'Serbest tekrar'}</h3><p>Tam bir TYT denemesi çöz, yanlışlarını deftere ekle.</p></div></div>;
- return <div className="lesson-head"><span className="lesson-emoji">{subjectIcon(l.subj)}</span><div><span className="eyebrow">{l.subj.toLocaleUpperCase('tr')} · {l.weekNum}. KAMP HAFTASI{day.shifted?' · KAYMIŞ':''}</span><h3>{l.topic}</h3><p>{l.note}</p><div className="lesson-meta"><span>🎯 {l.target}</span><span>👨‍🏫 {l.teacher}</span><span>{day.sport.badge}</span></div></div></div>}
+export function SubjectIcon({subj,size=14}:{subj:string;size?:number}){const s=subj.toLocaleLowerCase('tr');const p={size,'aria-hidden':true as const,style:{verticalAlign:'-2px'}};return /matematik|geometri/.test(s)?<Sigma {...p}/>:s.includes('türkçe')||s.includes('paragraf')?<BookOpen {...p}/>:s.includes('fizik')?<Zap {...p}/>:s.includes('kimya')?<FlaskConical {...p}/>:s.includes('biyoloji')?<Dna {...p}/>:/tarih|coğrafya|sosyal|felsefe|din/.test(s)?<Globe {...p}/>:s.includes('deneme')?<FileText {...p}/>:<BookOpen {...p}/>}
+export function LessonHead({day}:{day:DayPlan}){const l=day.lesson;if(day.isOff)return <div className="lesson-head off"><span className="lesson-emoji"><Umbrella size={18} aria-hidden="true"/></span><div><span className="eyebrow">KAYDIRILDI</span><h3>Dinlenme / sosyal gün</h3><p>Bu günün dersi bir sonraki güne aktarıldı; program bir gün uzadı.</p></div></div>;
+ if(!l)return <div className="lesson-head"><span className="lesson-emoji">{day.finished?<Flag size={18} aria-hidden="true"/>:<FileText size={18} aria-hidden="true"/>}</span><div><span className="eyebrow">{day.finished?'PROGRAM TAMAMLANDI':'SERBEST GÜN'}</span><h3>{day.finished?'Tüm konular bitti — deneme ve eksik kapatma dönemi':'Serbest tekrar'}</h3><p>Tam bir TYT denemesi çöz, yanlışlarını deftere ekle.</p></div></div>;
+ return <div className="lesson-head"><span className="lesson-emoji"><SubjectIcon subj={l.subj} size={18}/></span><div><span className="eyebrow">{l.subj.toLocaleUpperCase('tr')} · {l.weekNum}. KAMP HAFTASI{day.shifted?' · KAYMIŞ':''}</span><h3>{l.topic}</h3><p>{l.note}</p><div className="lesson-meta"><span><Target size={14} aria-hidden="true" style={{verticalAlign:'-2px'}}/> {l.target}</span><span><GraduationCap size={14} aria-hidden="true" style={{verticalAlign:'-2px'}}/> {l.teacher}</span><span>{day.sport.badge}</span></div></div></div>}
 
 export const dayFor=(plan:PlanState,date:string)=>buildDay(plan,date);
 export function nextBlock(day:DayPlan){const n=nowMin();return day.items.find(i=>i.type!=='off'&&i.startMin>n)||null}

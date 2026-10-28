@@ -47,92 +47,92 @@ export type SportProgram = { id: string; name: string; badge: string; cycleDesc:
 export const SPORT_PROGRAMS: SportProgram[] = [
   {
     id: 'ppl',
-    name: '🔥 Push / Pull / Legs (PPL)',
-    badge: '🏋️‍♂️ PPL Split',
+    name: 'Push / Pull / Legs (PPL)',
+    badge: 'PPL Split',
     cycleDesc: 'İtiş • Çekiş • Bacak • Dinlenme Döngüsü',
     dayMap: {
-      Pzt: { isRest: false, label: 'Push (Göğüs, Omuz, Ön/Arka Kol İtiş)', badge: '🔥 Spor: Push (İtiş)' },
-      Sal: { isRest: false, label: 'Pull (Sırt, Arka Omuz, Biceps Çekiş)', badge: '💪 Spor: Pull (Çekiş)' },
-      Çar: { isRest: false, label: 'Legs (Bacak, Kalça & Core)', badge: '🦵 Spor: Legs (Bacak)' },
-      Per: { isRest: true, label: 'Dinlenme & Kas Onarımı (Off Day)', badge: '🛌 Dinlenme (Off Day)' },
-      Cum: { isRest: false, label: 'Push (Üst Vücut İtiş Odaklı)', badge: '🔥 Spor: Push (İtiş)' },
-      Cmt: { isRest: false, label: 'Pull (Üst Vücut Çekiş Odaklı)', badge: '💪 Spor: Pull (Çekiş)' },
-      Paz: { isRest: true, label: 'Dinlenme & Aktif Toparlanma (Off Day)', badge: '🛌 Dinlenme (Off Day)' }
+      Pzt: { isRest: false, label: 'Push (Göğüs, Omuz, Ön/Arka Kol İtiş)', badge: 'Spor: Push (İtiş)' },
+      Sal: { isRest: false, label: 'Pull (Sırt, Arka Omuz, Biceps Çekiş)', badge: 'Spor: Pull (Çekiş)' },
+      Çar: { isRest: false, label: 'Legs (Bacak, Kalça & Core)', badge: 'Spor: Legs (Bacak)' },
+      Per: { isRest: true, label: 'Dinlenme & Kas Onarımı (Off Day)', badge: 'Dinlenme (Off Day)' },
+      Cum: { isRest: false, label: 'Push (Üst Vücut İtiş Odaklı)', badge: 'Spor: Push (İtiş)' },
+      Cmt: { isRest: false, label: 'Pull (Üst Vücut Çekiş Odaklı)', badge: 'Spor: Pull (Çekiş)' },
+      Paz: { isRest: true, label: 'Dinlenme & Aktif Toparlanma (Off Day)', badge: 'Dinlenme (Off Day)' }
     }
   },
   {
     id: 'ul',
-    name: '💪 Upper / Lower Split',
-    badge: '🏋️‍♂️ Upper/Lower',
+    name: 'Upper / Lower Split',
+    badge: 'Upper/Lower',
     cycleDesc: '2 Gün Spor (Üst/Alt Vücut) + 1 Gün Dinlenme',
     dayMap: {
-      Pzt: { isRest: false, label: 'Upper Body (Üst Vücut Antrenmanı)', badge: '🏋️‍♂️ Spor: Upper Body' },
-      Sal: { isRest: false, label: 'Lower Body (Alt Vücut & Bacak)', badge: '🦵 Spor: Lower Body' },
-      Çar: { isRest: true, label: 'OFF Günü (Dinlenme / Rest Day)', badge: '🛌 Dinlenme (Off Day)' },
-      Per: { isRest: false, label: 'Upper Body (Üst Vücut Antrenmanı)', badge: '🏋️‍♂️ Spor: Upper Body' },
-      Cum: { isRest: false, label: 'Lower Body (Alt Vücut & Core)', badge: '🦵 Spor: Lower Body' },
-      Cmt: { isRest: true, label: 'OFF Günü (Dinlenme / Rest Day)', badge: '🛌 Dinlenme (Off Day)' },
-      Paz: { isRest: false, label: 'Upper Body (Yeni Döngü Başlangıcı)', badge: '🏋️‍♂️ Spor: Upper Body' }
+      Pzt: { isRest: false, label: 'Upper Body (Üst Vücut Antrenmanı)', badge: 'Spor: Upper Body' },
+      Sal: { isRest: false, label: 'Lower Body (Alt Vücut & Bacak)', badge: 'Spor: Lower Body' },
+      Çar: { isRest: true, label: 'OFF Günü (Dinlenme / Rest Day)', badge: 'Dinlenme (Off Day)' },
+      Per: { isRest: false, label: 'Upper Body (Üst Vücut Antrenmanı)', badge: 'Spor: Upper Body' },
+      Cum: { isRest: false, label: 'Lower Body (Alt Vücut & Core)', badge: 'Spor: Lower Body' },
+      Cmt: { isRest: true, label: 'OFF Günü (Dinlenme / Rest Day)', badge: 'Dinlenme (Off Day)' },
+      Paz: { isRest: false, label: 'Upper Body (Yeni Döngü Başlangıcı)', badge: 'Spor: Upper Body' }
     }
   },
   {
     id: 'fb',
-    name: '⚡ Full Body (3 Gün)',
-    badge: '⚡ Full Body',
+    name: 'Full Body (3 Gün)',
+    badge: 'Full Body',
     cycleDesc: 'Pazartesi • Çarşamba • Cuma Tüm Vücut Antrenmanı',
     dayMap: {
-      Pzt: { isRest: false, label: 'Full Body A (Tüm Vücut Temel Bileşik)', badge: '⚡ Spor: Full Body' },
-      Sal: { isRest: true, label: 'Dinlenme & Toparlanma (Off Day)', badge: '🛌 Dinlenme (Off Day)' },
-      Çar: { isRest: false, label: 'Full Body B (Tüm Vücut Kuvvet & Hipertrofi)', badge: '⚡ Spor: Full Body' },
-      Per: { isRest: true, label: 'Dinlenme & Toparlanma (Off Day)', badge: '🛌 Dinlenme (Off Day)' },
-      Cum: { isRest: false, label: 'Full Body C (Tüm Vücut & Core)', badge: '⚡ Spor: Full Body' },
-      Cmt: { isRest: true, label: 'Hafta Sonu Dinlenme (Off Day)', badge: '🛌 Dinlenme (Off Day)' },
-      Paz: { isRest: true, label: 'Hafta Sonu Dinlenme (Off Day)', badge: '🛌 Dinlenme (Off Day)' }
+      Pzt: { isRest: false, label: 'Full Body A (Tüm Vücut Temel Bileşik)', badge: 'Spor: Full Body' },
+      Sal: { isRest: true, label: 'Dinlenme & Toparlanma (Off Day)', badge: 'Dinlenme (Off Day)' },
+      Çar: { isRest: false, label: 'Full Body B (Tüm Vücut Kuvvet & Hipertrofi)', badge: 'Spor: Full Body' },
+      Per: { isRest: true, label: 'Dinlenme & Toparlanma (Off Day)', badge: 'Dinlenme (Off Day)' },
+      Cum: { isRest: false, label: 'Full Body C (Tüm Vücut & Core)', badge: 'Spor: Full Body' },
+      Cmt: { isRest: true, label: 'Hafta Sonu Dinlenme (Off Day)', badge: 'Dinlenme (Off Day)' },
+      Paz: { isRest: true, label: 'Hafta Sonu Dinlenme (Off Day)', badge: 'Dinlenme (Off Day)' }
     }
   },
   {
     id: 'bro',
-    name: '🏋️‍♂️ Bölgesel (Bro Split - 5 Gün)',
-    badge: '🏋️‍♂️ Bölgesel Split',
+    name: 'Bölgesel (Bro Split - 5 Gün)',
+    badge: 'Bölgesel Split',
     cycleDesc: 'Hafta İçi Her Gün Tek Kas Grubu + Hafta Sonu Dinlenme',
     dayMap: {
-      Pzt: { isRest: false, label: 'Göğüs & Ön Kol (Chest & Biceps)', badge: '🏋️‍♂️ Spor: Göğüs & Biceps' },
-      Sal: { isRest: false, label: 'Sırt & Arka Kol (Back & Triceps)', badge: '💪 Spor: Sırt & Triceps' },
-      Çar: { isRest: false, label: 'Omuz & Karın (Shoulders & Core)', badge: '🔥 Spor: Omuz & Core' },
-      Per: { isRest: false, label: 'Bacak & Kalf (Leg Day)', badge: '🦵 Spor: Bacak (Legs)' },
-      Cum: { isRest: false, label: 'Kol & Eksik Bölge Tamamlama', badge: '💪 Spor: Kol & Tamamlama' },
-      Cmt: { isRest: true, label: 'Dinlenme Günü (Off Day)', badge: '🛌 Dinlenme (Off Day)' },
-      Paz: { isRest: true, label: 'Dinlenme Günü (Off Day)', badge: '🛌 Dinlenme (Off Day)' }
+      Pzt: { isRest: false, label: 'Göğüs & Ön Kol (Chest & Biceps)', badge: 'Spor: Göğüs & Biceps' },
+      Sal: { isRest: false, label: 'Sırt & Arka Kol (Back & Triceps)', badge: 'Spor: Sırt & Triceps' },
+      Çar: { isRest: false, label: 'Omuz & Karın (Shoulders & Core)', badge: 'Spor: Omuz & Core' },
+      Per: { isRest: false, label: 'Bacak & Kalf (Leg Day)', badge: 'Spor: Bacak (Legs)' },
+      Cum: { isRest: false, label: 'Kol & Eksik Bölge Tamamlama', badge: 'Spor: Kol & Tamamlama' },
+      Cmt: { isRest: true, label: 'Dinlenme Günü (Off Day)', badge: 'Dinlenme (Off Day)' },
+      Paz: { isRest: true, label: 'Dinlenme Günü (Off Day)', badge: 'Dinlenme (Off Day)' }
     }
   },
   {
     id: 'cardio',
-    name: '🏃 Kardiyo, Kondisyon & Ev Sporu',
-    badge: '🏃 Kardiyo & Kondisyon',
+    name: 'Kardiyo, Kondisyon & Ev Sporu',
+    badge: 'Kardiyo & Kondisyon',
     cycleDesc: 'Koşu, HIIT, Mobilite ve Ev Antrenmanı Döngüsü',
     dayMap: {
-      Pzt: { isRest: false, label: 'HIIT Kardiyo & Core Antrenmanı', badge: '🏃 Spor: HIIT & Core' },
-      Sal: { isRest: true, label: 'Aktif Dinlenme & Esneme', badge: '🛌 Dinlenme / Esneme' },
-      Çar: { isRest: false, label: 'Tempolu Koşu & Vücut Ağırlığı Direnç', badge: '🏃 Spor: Koşu & Direnç' },
-      Per: { isRest: true, label: 'Dinlenme Günü (Off Day)', badge: '🛌 Dinlenme (Off Day)' },
-      Cum: { isRest: false, label: 'Kondisyon, Mobilite & Karın', badge: '🏃 Spor: Kondisyon' },
-      Cmt: { isRest: false, label: 'Açık Hava Yürüyüş / Hafif Kardiyo', badge: '🏃 Spor: Hafif Kardiyo' },
-      Paz: { isRest: true, label: 'Tam Dinlenme (Off Day)', badge: '🛌 Dinlenme (Off Day)' }
+      Pzt: { isRest: false, label: 'HIIT Kardiyo & Core Antrenmanı', badge: 'Spor: HIIT & Core' },
+      Sal: { isRest: true, label: 'Aktif Dinlenme & Esneme', badge: 'Dinlenme / Esneme' },
+      Çar: { isRest: false, label: 'Tempolu Koşu & Vücut Ağırlığı Direnç', badge: 'Spor: Koşu & Direnç' },
+      Per: { isRest: true, label: 'Dinlenme Günü (Off Day)', badge: 'Dinlenme (Off Day)' },
+      Cum: { isRest: false, label: 'Kondisyon, Mobilite & Karın', badge: 'Spor: Kondisyon' },
+      Cmt: { isRest: false, label: 'Açık Hava Yürüyüş / Hafif Kardiyo', badge: 'Spor: Hafif Kardiyo' },
+      Paz: { isRest: true, label: 'Tam Dinlenme (Off Day)', badge: 'Dinlenme (Off Day)' }
     }
   },
   {
     id: 'none',
-    name: '📚 Spor Yapmıyorum (Sadece Ders)',
-    badge: '📚 Tam Odak TYT',
+    name: 'Spor Yapmıyorum (Sadece Ders)',
+    badge: 'Tam Odak TYT',
     cycleDesc: 'Spor bloğu eklenmez; tüm boş saatler ders ve dinlenmeye ayrılır',
     dayMap: {
-      Pzt: { isRest: true, label: 'Spor Bloğu Yok (Tam Odak Ders)', badge: '📚 Tam Odak Çalışma' },
-      Sal: { isRest: true, label: 'Spor Bloğu Yok (Tam Odak Ders)', badge: '📚 Tam Odak Çalışma' },
-      Çar: { isRest: true, label: 'Spor Bloğu Yok (Tam Odak Ders)', badge: '📚 Tam Odak Çalışma' },
-      Per: { isRest: true, label: 'Spor Bloğu Yok (Tam Odak Ders)', badge: '📚 Tam Odak Çalışma' },
-      Cum: { isRest: true, label: 'Spor Bloğu Yok (Tam Odak Ders)', badge: '📚 Tam Odak Çalışma' },
-      Cmt: { isRest: true, label: 'Spor Bloğu Yok (Tam Odak Ders)', badge: '📚 Tam Odak Çalışma' },
-      Paz: { isRest: true, label: 'Spor Bloğu Yok (Tam Odak Ders)', badge: '📚 Tam Odak Çalışma' }
+      Pzt: { isRest: true, label: 'Spor Bloğu Yok (Tam Odak Ders)', badge: 'Tam Odak Çalışma' },
+      Sal: { isRest: true, label: 'Spor Bloğu Yok (Tam Odak Ders)', badge: 'Tam Odak Çalışma' },
+      Çar: { isRest: true, label: 'Spor Bloğu Yok (Tam Odak Ders)', badge: 'Tam Odak Çalışma' },
+      Per: { isRest: true, label: 'Spor Bloğu Yok (Tam Odak Ders)', badge: 'Tam Odak Çalışma' },
+      Cum: { isRest: true, label: 'Spor Bloğu Yok (Tam Odak Ders)', badge: 'Tam Odak Çalışma' },
+      Cmt: { isRest: true, label: 'Spor Bloğu Yok (Tam Odak Ders)', badge: 'Tam Odak Çalışma' },
+      Paz: { isRest: true, label: 'Spor Bloğu Yok (Tam Odak Ders)', badge: 'Tam Odak Çalışma' }
     }
   }
 ];
@@ -142,8 +142,8 @@ export type Tempo = { id: TempoKey; name: string; badge: string; totalWeeks: num
 export const TEMPO_OPTIONS: Record<TempoKey, Tempo> = {
   relaxed: {
     id: 'relaxed',
-    name: '🌱 Rahat & Esnek Program',
-    badge: '🌱 Rahat Tempo (22 Hafta)',
+    name: 'Rahat & Esnek Program',
+    badge: 'Rahat Tempo (22 Hafta)',
     totalWeeks: 22,
     dailyHoursLabel: 'Günde ~1.5 - 2 Saat',
     exampleLabel: 'Günde 1.5 - 2 Saat (30 Soru + Konu Tekrarı + 15 Paragraf)',
@@ -154,8 +154,8 @@ export const TEMPO_OPTIONS: Record<TempoKey, Tempo> = {
   },
   balanced: {
     id: 'balanced',
-    name: '⚡ Dengeli Program',
-    badge: '⚡ Dengeli Kamp (16 Hafta)',
+    name: 'Dengeli Program',
+    badge: 'Dengeli Kamp (16 Hafta)',
     totalWeeks: 16,
     dailyHoursLabel: 'Günde ~3 Saat',
     exampleLabel: 'Günde 3 Saat (50 Soru + Konu Tekrarı + 20 Paragraf)',
@@ -167,8 +167,8 @@ export const TEMPO_OPTIONS: Record<TempoKey, Tempo> = {
   },
   intense: {
     id: 'intense',
-    name: '🔥 Sıkışık & Yoğun Program',
-    badge: '🔥 Sıkışık Kamp (12 Hafta)',
+    name: 'Sıkışık & Yoğun Program',
+    badge: 'Sıkışık Kamp (12 Hafta)',
     totalWeeks: 12,
     dailyHoursLabel: 'Günde ~4.5+ Saat',
     exampleLabel: 'Günde 4.5+ Saat (90 Soru + 2 Konu + Branş Denemesi)',

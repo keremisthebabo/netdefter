@@ -84,7 +84,7 @@ export const slotOf=(plan:PlanState,date:string)=>daysBetween(plan.config.startD
 export const dateOf=(plan:PlanState,slot:number)=>addDays(plan.config.startDate,slot);
 
 // ---------- birleşik gün planı ----------
-export function sportFor(cfg:PlanConfig,dayKey:DayKey){const prog=SPORT_PROGRAMS.find(s=>s.id===cfg.sport.programId)||SPORT_PROGRAMS.find(s=>s.id==='none')!;const raw=prog.dayMap[dayKey];const off=cfg.sport.weekendOff&&isWeekend(dayKey);const info=off?{...raw,isRest:true,badge:'🛌 Dinlenme (hafta sonu)',label:'Dinlenme günü (hafta sonu spor yok)'}:raw;const active=!info.isRest&&prog.id!=='none';return {...info,isRest:!active,programName:prog.name,time:active?`${cfg.sport.start} - ${cfg.sport.end}`:'Dinlenme / spor yok'}}
+export function sportFor(cfg:PlanConfig,dayKey:DayKey){const prog=SPORT_PROGRAMS.find(s=>s.id===cfg.sport.programId)||SPORT_PROGRAMS.find(s=>s.id==='none')!;const raw=prog.dayMap[dayKey];const off=cfg.sport.weekendOff&&isWeekend(dayKey);const info=off?{...raw,isRest:true,badge:'Dinlenme (hafta sonu)',label:'Dinlenme günü (hafta sonu spor yok)'}:raw;const active=!info.isRest&&prog.id!=='none';return {...info,isRest:!active,programName:prog.name,time:active?`${cfg.sport.start} - ${cfg.sport.end}`:'Dinlenme / spor yok'}}
 export function buildDay(plan:PlanState,date:string):DayPlan{const cfg=plan.config;const dayKey=dayKeyOf(date);const slot=slotOf(plan,date);const at=slot>=0?lessonAt(plan,slot):{isOff:false,lesson:null,shifted:false,finished:false};
  const items:DayItem[]=[];const busy:Busy[]=[];const warnings:string[]=[];
  const push=(type:DayItem['type'],r:{startMin:number;endMin:number},title:string,detail:string,tag:string,buffer=15)=>{busy.push({startMin:r.startMin,endMin:r.endMin,buffer});items.push({type,startMin:r.startMin,endMin:r.endMin,start:fmt(r.startMin),end:fmt(r.endMin),title,detail,tag,fitted:true})};
@@ -109,7 +109,6 @@ export function weekMeta(plan:PlanState,weekNum:number){const weeks=campaignWeek
 
 // ---------- Net Defterim eşlemesi ----------
 export function noteSubject(subj:string){const s=subj.toLocaleLowerCase('tr');if(/matematik|geometri|problem/.test(s))return 'Matematik';if(/türkçe|paragraf|edebiyat|dil bilgisi/.test(s))return 'Türk Dili ve Edebiyatı';if(s.includes('fizik'))return 'Fizik';if(s.includes('kimya'))return 'Kimya';if(s.includes('biyoloji'))return 'Biyoloji';if(s.includes('tarih'))return 'Tarih';if(s.includes('coğrafya'))return 'Coğrafya';if(s.includes('felsefe'))return 'Felsefe';if(s.includes('din'))return 'Din Kültürü ve Ahlak Bilgisi';return 'Matematik'}
-export function subjectIcon(subj:string){const s=subj.toLocaleLowerCase('tr');return /matematik|geometri/.test(s)?'📐':s.includes('türkçe')||s.includes('paragraf')?'📚':s.includes('fizik')?'⚡':s.includes('kimya')?'🧪':s.includes('biyoloji')?'🧬':/tarih|coğrafya|sosyal|felsefe|din/.test(s)?'🌍':s.includes('deneme')?'📝':'📖'}
 export const MOTIVATION=[
  'Kendi programına sadık kaldığın her gün seni hedefine bir adım daha yaklaştırır.',
  'Disiplin; canın istemediğinde bile masaya oturabilmektir.',
@@ -120,6 +119,6 @@ export const MOTIVATION=[
  'Her yanlış, bir sonraki doğruya.'];
 
 // ---------- paylaşım metinleri (Telegram) ----------
-export function dayShareText(d:DayPlan){const l=d.lesson;return [`📅 ${d.dayName} ${d.date}`,l?`📚 ${l.subj}: ${l.topic}`:d.isOff?'🏖️ Dinlenme günü':'📝 Serbest tekrar',l?`🎯 Hedef: ${l.target}`:'',`🏋️ Spor: ${d.sport.badge}`,'',...d.items.map(i=>`• ${i.start}${i.end?'-'+i.end:''} ${i.title}`)].filter(x=>x!=='').join('\n')}
-export function weekShareText(plan:PlanState,weekNum:number){const m=weekMeta(plan,weekNum);return [`📌 ${m.title.toLocaleUpperCase('tr')}`,`(${weekDates(plan,weekNum)[0]} haftası)`,'',...weekDates(plan,weekNum).map(dt=>{const d=buildDay(plan,dt);return `▫️ ${d.dayName}: ${d.lesson?`${d.lesson.subj} — ${d.lesson.topic}`:d.isOff?'Dinlenme (kaydırıldı)':'Serbest tekrar'}`})].join('\n')}
+export function dayShareText(d:DayPlan){const l=d.lesson;return [`${d.dayName} ${d.date}`,l?`${l.subj}: ${l.topic}`:d.isOff?'Dinlenme günü':'Serbest tekrar',l?`Hedef: ${l.target}`:'',`Spor: ${d.sport.badge}`,'',...d.items.map(i=>`• ${i.start}${i.end?'-'+i.end:''} ${i.title}`)].filter(x=>x!=='').join('\n')}
+export function weekShareText(plan:PlanState,weekNum:number){const m=weekMeta(plan,weekNum);return [`${m.title.toLocaleUpperCase('tr')}`,`(${weekDates(plan,weekNum)[0]} haftası)`,'',...weekDates(plan,weekNum).map(dt=>{const d=buildDay(plan,dt);return `${d.dayName}: ${d.lesson?`${d.lesson.subj} — ${d.lesson.topic}`:d.isOff?'Dinlenme (kaydırıldı)':'Serbest tekrar'}`})].join('\n')}
 export const telegramUrl=(text:string,url='')=>`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;

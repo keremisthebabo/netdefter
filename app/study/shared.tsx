@@ -5,7 +5,7 @@ import {Select,SelectTrigger,SelectValue,SelectContent,SelectItem} from '@/compo
 import {topicOptions,mebGrades,gradeOfExam,type Question,type Exam,type Report,type Video,type StudyNote,type Profile} from '@/lib/study';
 import type {PlanState,Lesson} from '@/lib/plan/scheduler';
 export type View='home'|'program'|'archive'|'report'|'exams'|'notes'|'settings';
-export type AiKind='solve'|'note'|'report'|'video';
+export type AiKind='solve'|'note'|'report'|'video'|'quote';
 export type Usage=Record<AiKind,{used:number;limit:number}>&{unlimited:boolean};
 export type Account={
  id?:string;
@@ -43,5 +43,5 @@ export function TopicSelect({subject,value,onChange,examType,allowEmpty=true,lab
  return <select className="choice-native" aria-label={label} value={known||!value?value:'__custom'} onChange={e=>onChange(e.target.value==='__custom'?value:e.target.value)}>{allowEmpty&&<option value="">Konu seç{prefer?` (${mebGrades[prefer]} öne alındı)`:''}</option>}{!known&&value&&<option value="__custom">{value} (listede yok)</option>}{grades.map(g=>{const units=[...new Set(opts.filter(o=>o.grade===g).map(o=>o.unit))];return units.map(u=><optgroup key={g+u} label={`${mebGrades[g]||g} · ${u}`}>{opts.filter(o=>o.grade===g&&o.unit===u).map(o=><option key={o.grade+o.unit+o.value} value={o.value}>{o.value}</option>)}</optgroup>)})}</select>}
 // Günlük yapay zekâ hakkı: kalan sayı (sınırsızsa null)
 export const remaining=(u:Usage|null,k:AiKind)=>!u||u.unlimited?null:Math.max(0,u[k].limit-u[k].used);
-export const kindLabel:Record<AiKind,string>={solve:'Soru çözümü',note:'Ders notu',report:'Aylık rapor',video:'Video yenileme'};
+export const kindLabel:Record<AiKind,string>={solve:'Soru çözümü',note:'Ders notu',report:'Aylık rapor',video:'Video yenileme',quote:'Günün teşviki'};
 export function QuotaNote({kind}:{kind:AiKind}){const s=useStudy();const left=remaining(s.usage,kind);if(left===null||!s.ai)return null;return <span className={'quota-note'+(left===0?' empty':'')}>{left===0?`Bugünkü ${kindLabel[kind].toLocaleLowerCase('tr')} hakkın doldu · gece yarısı yenilenir`:`Bugün kalan: ${left}/${s.usage![kind].limit} ${kindLabel[kind].toLocaleLowerCase('tr')}`}</span>}
