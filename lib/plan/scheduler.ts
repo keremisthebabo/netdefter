@@ -62,10 +62,10 @@ const cache=new Map<TempoKey,CampaignWeek[]>();
 export function campaignWeeks(tempo:TempoKey='balanced'):CampaignWeek[]{const hit=cache.get(tempo);if(hit)return hit;const units=LINEAR_CURRICULUM;let weeks:CampaignWeek[]=[];
  if(tempo==='balanced')weeks=WEEKS_DATABASE.map(w=>({weekNum:w.weekNum,phaseId:w.phaseId,phaseName:phaseOf(w.phaseId).name,title:w.title,desc:w.desc,days:w.days.map(d=>toLesson(d,w.weekNum,w.phaseId,'50 Soru + Konu Tekrarı + 20 Paragraf'))}));
  else if(tempo==='relaxed'){const total=22;let c=0;for(let wn=1;wn<=total;wn++){const ph=MACRO_PHASES[Math.min(3,Math.floor((wn-1)/total*4))];const days:Lesson[]=[];let first='';
-   for(let d=0;d<7;d++){const review=(d===2||d===6)&&(units.length-c)>(total-wn)*5;
+   for(let d=0;d<7;d++){const review=(d===2||d===6)&&c>0&&((total-wn)*7+(7-d))>(units.length-c);
     if(!review&&c<units.length){const u=units[c++];if(!first)first=u.topic;days.push(toLesson(u,wn,ph.id,'30 Soru + 1 Konu Videosu + 15 Paragraf'))}
     else if(c<units.length&&review){const p=units[Math.max(0,c-1)];days.push({...toLesson(p,wn,ph.id,'30 Pekiştirme Sorusu + 15 Paragraf + Yanlış Defteri'),subj:`${p.subj} Pekiştirme`,topic:`${p.topic} — Esnek Soru Çözümü & Tekrar`,note:`Pekiştirme günü: ${p.topic} konusundaki soru kalıplarını sindirerek tekrar et.`})}
-    else days.push({index:0,weekNum:wn,phaseId:ph.id,subj:'Genel Deneme & Tekrar',topic:'TYT Karma Branş Denemesi & Yanlış Defteri Analizi',teacher:'Tüm Kadro',target:'30 Seçme Soru + Yanlış Defteri Taraması',directUrl:'https://www.youtube.com/results?search_query=tyt+genel+tekrar+deneme+cozumu',channelUrl:DIRECT_CHANNELS.mertHoca,note:'Esnek programın tekrar ve deneme günü.'})}
+    else days.push({index:0,weekNum:wn,phaseId:ph.id,subj:'Genel Deneme & Tekrar',topic:'TYT Karma Branş Denemesi & Yanlış Defteri Analizi',teacher:'Tüm Kadro',target:'30 Seçme Soru + Yanlış Defteri Taraması',directUrl:'https://www.youtube.com/watch?v=OY2MsClSr3U',channelUrl:DIRECT_CHANNELS.mertHoca,note:'Esnek programın tekrar ve deneme günü.'})}
    weeks.push({weekNum:wn,phaseId:ph.id,phaseName:ph.name,title:`${wn}. Hafta: ${first||'Genel Deneme & Pekiştirme'}`,desc:'Rahat tempo: günde 1,5–2 saatlik sindirerek ilerleme.',days})}}
  else{const total=12,slots=total*7;let c=0;for(let wn=1;wn<=total;wn++){const ph=MACRO_PHASES[Math.min(3,Math.floor((wn-1)/total*4))];const days:Lesson[]=[];let first='';
    for(let d=0;d<7;d++){const g=(wn-1)*7+d;const two=(units.length-c)>(slots-g)&&c+1<units.length;

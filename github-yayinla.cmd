@@ -28,7 +28,8 @@ echo GitHub kullanicisi: %GHLOGIN% >>"%LOG%"
 "%GIT%" config --global core.autocrlf true
 
 echo [3/5] Dosyalar hazirlaniyor...
-"%GIT%" config --global --get-all safe.directory | findstr /c:"2026-09-12/be" >nul || "%GIT%" config --global --add safe.directory "C:/Users/Yusuf Kaya/Documents/Codex/2026-09-12/be"
+set "CURDIR=%CD:\=/%"
+"%GIT%" config --global --get-all safe.directory | findstr /i /c:"%CURDIR%" >nul || "%GIT%" config --global --add safe.directory "%CURDIR%"
 if not exist ".git" "%GIT%" init -b main >>"%LOG%" 2>&1
 "%GIT%" add -A >>"%LOG%" 2>&1
 "%GIT%" ls-files --error-unmatch .env >nul 2>&1

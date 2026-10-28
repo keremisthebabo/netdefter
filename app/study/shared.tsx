@@ -3,12 +3,24 @@ import {createContext,useContext} from 'react';
 import {BookOpen} from 'lucide-react';
 import {Select,SelectTrigger,SelectValue,SelectContent,SelectItem} from '@/components/ui/select';
 import {topicOptions,mebGrades,gradeOfExam,type Question,type Exam,type Report,type Video,type StudyNote,type Profile} from '@/lib/study';
-import type {PlanState} from '@/lib/plan/scheduler';
+import type {PlanState,Lesson} from '@/lib/plan/scheduler';
 export type View='home'|'program'|'archive'|'report'|'exams'|'notes'|'settings';
 export type AiKind='solve'|'note'|'report'|'video';
 export type Usage=Record<AiKind,{used:number;limit:number}>&{unlimited:boolean};
-export type Account={name:string;email:string;admin:boolean;hasPassword:boolean;google:boolean};
-export type ApiResponse={error?:string;questions:Question[];question:Question;exams:Exam[];exam:Exam;aiReady:boolean;youtubeReady:boolean;user:Account|null;usage:Usage;profileSet:boolean;plan:PlanState|null;report:Report|null;previous:Report|null;videos:Video[];notice:string;added:number;received:number;notes:StudyNote[];note:StudyNote|null;profile:Profile};
+export type Account={
+ id?:string;
+ name:string;
+ email:string;
+ admin:boolean;
+ developer?:boolean;
+ hasPassword:boolean;
+ google:boolean;
+ tenantId?:string;
+ tenantName?:string;
+ tenantRole?:'owner'|'admin'|'member';
+ authProvider?:'supabase'|'local';
+};
+export type ApiResponse={error?:string;questions:Question[];question:Question;exams:Exam[];exam:Exam;aiReady:boolean;youtubeReady:boolean;supabaseReady?:boolean;user:Account|null;usage:Usage;profileSet:boolean;plan:PlanState|null;report:Report|null;previous:Report|null;videos:Video[];notice:string;added:number;received:number;notes:StudyNote[];note:StudyNote|null;profile:Profile};
 export type UploadPreset={subject?:string;topic?:string;examType?:string;exam?:string;question?:string};
 export class ApiError extends Error{constructor(message:string,public status:number){super(message)}}
 export async function api(url:string,init?:RequestInit){const r=await fetch(url,init);let data:ApiResponse;try{data=await r.json() as ApiResponse}catch{throw new ApiError('Sunucudan beklenmeyen yanıt geldi.',r.status)}if(!r.ok)throw new ApiError(data.error||'İşlem tamamlanamadı.',r.status);return data}
@@ -23,7 +35,7 @@ export const mistakeLabel:Record<string,string>={'yanlış':'Yanlış işaretled
 export function download(blob:Blob,name:string){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),4000)}
 export function readSetting(key:string,fallback:string){try{return localStorage.getItem('net-defterim:'+key)||fallback}catch{return fallback}}
 export function writeSetting(key:string,value:string){try{localStorage.setItem('net-defterim:'+key,value)}catch{}}
-export type Study={rows:Question[];exams:Exam[];ai:boolean;youtube:boolean;user:Account|null;usage:Usage|null;bumpUsage:(k:AiKind)=>void;logout:()=>Promise<void>;plan:PlanState|null;setPlan:(p:PlanState|null)=>void;openWizard:()=>void;planOp:(body:Record<string,unknown>,success?:string)=>Promise<void>;loading:boolean;solving:Set<string>;busy:boolean;setView:(v:View)=>void;openUpload:(files?:File[],preset?:UploadPreset)=>void;select:(q:Question|null)=>void;solve:(q:Question)=>Promise<void>;upsert:(q:Question)=>void;remove:(id:string)=>void;setExams:(f:(e:Exam[])=>Exam[])=>void;reload:()=>Promise<void>;setSubjectFilter:(s:string)=>void;profile:Profile;setProfile:(p:Profile)=>void;examDate:string;setExamDate:(d:string)=>void;openNotes:(p:{subject:string;topic:string;examType?:string})=>void};
+export type Study={rows:Question[];exams:Exam[];ai:boolean;youtube:boolean;supabase?:boolean;user:Account|null;usage:Usage|null;bumpUsage:(k:AiKind)=>void;logout:()=>Promise<void>;plan:PlanState|null;setPlan:(p:PlanState|null)=>void;openWizard:()=>void;planOp:(body:Record<string,unknown>,success?:string)=>Promise<void>;loading:boolean;solving:Set<string>;busy:boolean;setView:(v:View)=>void;openUpload:(files?:File[],preset?:UploadPreset)=>void;select:(q:Question|null)=>void;solve:(q:Question)=>Promise<void>;upsert:(q:Question)=>void;remove:(id:string)=>void;setExams:(f:(e:Exam[])=>Exam[])=>void;reload:()=>Promise<void>;setSubjectFilter:(s:string)=>void;profile:Profile;setProfile:(p:Profile)=>void;examDate:string;setExamDate:(d:string)=>void;openNotes:(p:{subject:string;topic:string;examType?:string})=>void;openLessonVideo:(l:Lesson)=>void};
 export const StudyContext=createContext<Study|null>(null);
 export function useStudy(){const c=useContext(StudyContext);if(!c)throw new Error('StudyContext eksik');return c}
 // MEB ünite/konu menüsü: Ders seçildikten sonra sınıf › ünite gruplarıyla konu listesi. examType "10. Sınıf" gibi bir sınıfsa o sınıf öne alınır.

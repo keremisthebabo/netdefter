@@ -1,5 +1,6 @@
 "use client";
 import {useEffect,useState} from 'react';
+import {createPortal} from 'react-dom';
 import {Sparkles,LoaderCircle,NotebookPen,Trash2,Printer,RefreshCw,ArrowUpRight,Wand2} from 'lucide-react';
 import {toast} from 'sonner';
 import {subjects,examTypes,topicMeta,type StudyNote} from '@/lib/study';
@@ -13,6 +14,7 @@ export function NotesView({preset}:{preset:{subject:string;topic:string;examType
  async function remove(n:StudyNote){setBusy(true);try{await api('/api/notes/'+n.id,{method:'DELETE'});setNotes(list=>list.filter(x=>x.id!==n.id));if(selected?.id===n.id)setSelected(null);toast.success('Not silindi.')}catch(e){toast.error((e as Error).message)}finally{setBusy(false)}}
  function print(){window.print()}
  const meta=selected?topicMeta(selected.subject,selected.topic):null;
+ const printSection=<section id="print-note">{selected&&<><h1>{selected.topic}</h1><p>{selected.subject}{meta?` · ${meta.gradeLabel} · ${meta.unit}`:''} · {new Date(selected.updated_at).toLocaleDateString('tr-TR')}</p><div className="prewrap">{selected.content}</div></>}</section>;
  return <><div className="report-layout notes-layout">
   <article className="panel"><span className="eyebrow">KONUYU SEÇ, NOTU YAPAY ZEKÂ HAZIRLASIN</span><h2>Yeni ders notu</h2><p className="muted description">Ders ve MEB öğretim programındaki konuyu seç; not, Maarif Modeli içerik çerçevesine ve senin o konudaki yanlışlarına göre hazırlanır. Sonra alttan ek istek yazarak notu değiştirebilirsin.</p>
    <div className="form-grid"><label>Ders<Choice label="Ders" value={subject} onChange={v=>{setSubject(v);setTopic('');writeSetting('notesSubject',v)}} values={subjects}/></label><label>Sınav / sınıf<Choice label="Sınav türü" value={examType} onChange={setExamType} values={[...examTypes]}/></label></div>
@@ -27,4 +29,4 @@ export function NotesView({preset}:{preset:{subject:string;topic:string;examType
    <div className="goal-box"><h3><Wand2 size={16}/> Notu isteğine göre değiştir</h3><p className="muted">Örn. "daha kısa olsun", "5 örnek soru daha ekle", "formülleri tablo gibi sırala", "10. sınıf düzeyinde anlat".</p><textarea className="notes-editor short" placeholder="Ek isteğini yaz…" value={prompt} disabled={busy||!ai} onChange={e=>setPrompt(e.target.value)}/><div className="actions wrap"><button className="primary" disabled={busy||!ai||!prompt.trim()} onClick={()=>void generate({subject:selected.subject,topic:selected.topic,examType:selected.exam_type||undefined},prompt.trim())}>{busy?<LoaderCircle className="spin" size={16}/>:<Sparkles size={16}/>} İsteğe göre yeniden hazırla</button><button className="secondary" disabled={busy||!ai} onClick={()=>void generate({subject:selected.subject,topic:selected.topic,examType:selected.exam_type||undefined})}><RefreshCw size={15}/> Baştan üret</button></div>{selected.prompt&&<small className="saved-note">Son istek: “{selected.prompt}” · {new Date(selected.updated_at).toLocaleString('tr-TR')}</small>}</div>
    <p className="footnote">Yapay zekâ notu; formül ve tarihleri ders kitabınla doğrula. <button className="text-button" onClick={()=>{s.setSubjectFilter(selected.subject)}}>Bu dersin yanlışlarına git <ArrowUpRight size={14}/></button></p></>:<Empty title="Bir not seç veya yeni not hazırla." icon={<NotebookPen size={30}/>}>Soldan ders ve konuyu seçip "Notu hazırla" düğmesine bas. Soru penceresindeki "Ders notu" bağlantısı da seni buraya getirir.</Empty>}</article>
  </div>
- <section id="print-note">{selected&&<><h1>{selected.topic}</h1><p>{selected.subject}{meta?` · ${meta.gradeLabel} · ${meta.unit}`:''} · {new Date(selected.updated_at).toLocaleDateString('tr-TR')}</p><div className="prewrap">{selected.content}</div></>}</section></>}
+ {typeof document!=='undefined'?createPortal(printSection,document.body):printSection}</>}

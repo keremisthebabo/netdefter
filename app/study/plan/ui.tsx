@@ -1,7 +1,11 @@
 "use client";
-import {Check,Undo2,Umbrella,Play,PlusCircle,NotebookPen,Send,AlertTriangle,Dumbbell,School,Pin,BookOpen,Coffee} from 'lucide-react';
-import {buildDay,noteSubject,subjectIcon,dayShareText,telegramUrl,toMin,type DayPlan,type DayItem,type PlanState} from '@/lib/plan/scheduler';
-import {useStudy} from '../shared';
+import {useCallback,useEffect,useState} from 'react';
+import {Check,Undo2,Umbrella,Play,PlusCircle,NotebookPen,Send,AlertTriangle,Dumbbell,School,Pin,BookOpen,Coffee,RefreshCw,ThumbsDown,ExternalLink,LoaderCircle} from 'lucide-react';
+import {toast} from 'sonner';
+import {Dialog,DialogContent,DialogHeader,DialogTitle,DialogDescription} from '@/components/ui/dialog';
+import {buildDay,noteSubject,subjectIcon,dayShareText,telegramUrl,toMin,type DayPlan,type DayItem,type PlanState,type Lesson} from '@/lib/plan/scheduler';
+import {normalizeTopic,type Video} from '@/lib/study';
+import {useStudy,postJson,videoId,formatViews} from '../shared';
 
 export const longDate=(d:string)=>new Date(d+'T12:00:00').toLocaleDateString('tr-TR',{day:'numeric',month:'long',weekday:'long'});
 export const shortDate=(d:string)=>new Date(d+'T12:00:00').toLocaleDateString('tr-TR',{day:'numeric',month:'short'});
@@ -19,15 +23,55 @@ export function Warnings({day}:{day:DayPlan}){if(!day.warnings.length)return nul
 
 // Bir günün ders işlemleri: tamamla, dışarı çıktım (domino), video, soru ekle, ders notu, paylaş
 export function LessonActions({day,compact=false}:{day:DayPlan;compact?:boolean}){const s=useStudy();const plan=s.plan!;const l=day.lesson;const isDone=!!(l&&plan.done[String(l.index)]);
- const ask=()=>{if(!l)return;s.openUpload([], {subject:noteSubject(l.subj),examType:'TYT',exam:`Program · ${l.weekNum}. hafta`,question:''})};
+ const resolveTopic=(subj:string,rawTopic:string)=>{const norm=normalizeTopic(subj,rawTopic);return norm!=='Konu belirlenmedi'?norm:''};
+ const ask=()=>{if(!l)return;const sub=noteSubject(l.subj);s.openUpload([],{subject:sub,topic:resolveTopic(sub,l.topic),examType:'TYT',exam:`Program · ${l.weekNum}. hafta`,question:''})};
  return <div className={'lesson-actions'+(compact?' compact':'')}>
   {l&&<button className={isDone?'secondary':'primary'} onClick={()=>void s.planOp({action:isDone?'undone':'done',lesson:l.index},isDone?'Ders yeniden açıldı.':'Harika! Ders tamamlandı.')}>{isDone?<><Undo2 size={16}/> Geri al</>:<><Check size={16}/> Tamamladım</>}</button>}
   {day.isOff?<button className="secondary" onClick={()=>void s.planOp({action:'unshift',slot:day.slot},'Kaydırma geri alındı.')}><Undo2 size={16}/> Kaydırmayı geri al</button>:l&&!isDone&&<button className="secondary" onClick={()=>void s.planOp({action:'shift',slot:day.slot},'Bugünün dersi yarına kaydırıldı; program bir gün uzadı.')} title="Bugün çalışamayacaksan dersler zincirleme bir gün ileri kayar"><Umbrella size={16}/> Dışarı çıktım</button>}
-  {l&&<a className="secondary" href={l.directUrl} target="_blank" rel="noreferrer"><Play size={16}/> {compact?'Video':`Konu videosu · ${l.teacher.split(/[&/]/)[0].trim()}`}</a>}
+  {l&&<button className="secondary" onClick={()=>s.openLessonVideo(l)}><Play size={16}/> {compact?'Video':`Konu videosu · ${l.teacher.split(/[&/]/)[0].trim()}`}</button>}
   {l&&!compact&&<button className="secondary" onClick={ask}><PlusCircle size={16}/> Yanlış ekle</button>}
-  {l&&!compact&&<button className="secondary" onClick={()=>s.openNotes({subject:noteSubject(l.subj),topic:'',examType:'TYT'})}><NotebookPen size={16}/> Ders notu</button>}
+  {l&&!compact&&<button className="secondary" onClick={()=>{const sub=noteSubject(l.subj);s.openNotes({subject:sub,topic:resolveTopic(sub,l.topic),examType:'TYT'})}}><NotebookPen size={16}/> Ders notu</button>}
   {!compact&&<a className="text-button" href={telegramUrl(dayShareText(day))} target="_blank" rel="noreferrer"><Send size={15}/> Telegram'da paylaş</a>}
  </div>}
+
+export function LessonVideoDialog({lesson,onClose}:{lesson:Lesson|null;onClose:()=>void}){
+ const [videos,setVideos]=useState<Video[]>([]);
+ const [activeUrl,setActiveUrl]=useState('');
+ const [loading,setLoading]=useState(false);
+ const [rejected,setRejected]=useState<string[]>([]);
+ const loadVideos=useCallback(async(l:Lesson,force:boolean,extraReject?:string)=>{
+  const nextReject=extraReject?[...rejected,extraReject]:rejected;
+  if(extraReject)setRejected(nextReject);
+  const sub=noteSubject(l.subj);
+  const baseVideo:Video={title:`${l.subj} — ${l.topic}`,url:l.directUrl,reason:`Program önerisi · ${l.teacher}`,channel:l.teacher};
+  setLoading(true);
+  try{
+   const d=await postJson('/api/videos',{subject:sub,topic:l.topic,examType:'TYT',teacher:l.teacher.split(/[&/]/)[0].trim(),force,rejectedUrls:nextReject});
+   const list=[baseVideo,...(d.videos||[]).filter(v=>v.url!==baseVideo.url)].filter(v=>!nextReject.includes(v.url));
+   setVideos(list.length?list:[baseVideo]);
+   if(extraReject&&activeUrl===extraReject&&list[0])setActiveUrl(list[0].url);
+  }catch{
+   setVideos([baseVideo]);
+  }finally{setLoading(false)}
+ },[rejected,activeUrl]);
+ useEffect(()=>{
+  if(!lesson){setVideos([]);setActiveUrl('');setRejected([]);return}
+  const baseVideo:Video={title:`${lesson.subj} — ${lesson.topic}`,url:lesson.directUrl,reason:`Program önerisi · ${lesson.teacher}`,channel:lesson.teacher};
+  setVideos([baseVideo]);
+  setActiveUrl(lesson.directUrl);
+  setRejected([]);
+  void loadVideos(lesson,false);
+ // eslint-disable-next-line react-hooks/exhaustive-deps
+ },[lesson?.index,lesson?.directUrl]);
+ const activeVid=videoId(activeUrl);
+ return <Dialog open={!!lesson} onOpenChange={v=>{if(!v)onClose()}}><DialogContent className="question-dialog"><DialogHeader><DialogTitle>{lesson?.subj} — {lesson?.topic}</DialogTitle><DialogDescription>{lesson?.weekNum}. kamp haftası · Öğretmen: {lesson?.teacher} · Hedef: {lesson?.target}</DialogDescription></DialogHeader>
+  {lesson&&<div className="video-area">
+   <div className="section-heading"><div><h3>Konu anlatım videosu</h3><p className="muted">Video doğrudan aşağıda oynatılır; alternatif anlatımlara tıklayarak geçiş yapabilirsin.</p></div><div className="actions"><button className="secondary" disabled={loading} onClick={()=>void loadVideos(lesson,true)}>{loading?<LoaderCircle className="spin" size={16}/>:<RefreshCw size={16}/>} Yeniden ara</button>{activeUrl&&<a className="secondary" href={activeUrl} target="_blank" rel="noreferrer"><ExternalLink size={16}/> YouTube'da aç</a>}</div></div>
+   {activeVid&&<iframe className="video-player" src={`https://www.youtube-nocookie.com/embed/${activeVid}?rel=0`} title={lesson.topic} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen/>}
+   {videos.map((v,i)=>{const isSel=v.url===activeUrl;return <div className={'video-card'+(isSel?' active':'')} key={v.url}><button type="button" className="video-main" onClick={()=>setActiveUrl(v.url)}><span className="play-icon"><Play size={22}/></span><div><span className="eyebrow">{i===0?'PROGRAM ÖNERİSİ':'ALTERNATİF ANLATIM'}{isSel?' · ŞU AN OYNATILIYOR':''}</span><h3>{v.title}</h3><p>{v.reason}</p><small>{[v.channel,v.duration,formatViews(v.views)&&formatViews(v.views)+' görüntülenme'].filter(Boolean).join(' · ')||v.url}</small></div></button><div className="actions wrap"><a className="text-button" href={v.url} target="_blank" rel="noreferrer"><ExternalLink size={14}/> YouTube'da aç</a>{videos.length>1&&<button className="text-button reject" disabled={loading} onClick={()=>{toast.message('Alternatif video getiriliyor…');void loadVideos(lesson,true,v.url)}}><ThumbsDown size={14}/> İşime yaramadı</button>}</div></div>})}
+  </div>}
+ </DialogContent></Dialog>;
+}
 
 export function LessonHead({day}:{day:DayPlan}){const l=day.lesson;if(day.isOff)return <div className="lesson-head off"><span className="lesson-emoji">🏖️</span><div><span className="eyebrow">KAYDIRILDI</span><h3>Dinlenme / sosyal gün</h3><p>Bu günün dersi bir sonraki güne aktarıldı; program bir gün uzadı.</p></div></div>;
  if(!l)return <div className="lesson-head"><span className="lesson-emoji">{day.finished?'🏁':'📝'}</span><div><span className="eyebrow">{day.finished?'PROGRAM TAMAMLANDI':'SERBEST GÜN'}</span><h3>{day.finished?'Tüm konular bitti — deneme ve eksik kapatma dönemi':'Serbest tekrar'}</h3><p>Tam bir TYT denemesi çöz, yanlışlarını deftere ekle.</p></div></div>;

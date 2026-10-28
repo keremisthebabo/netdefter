@@ -1,4 +1,4 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# See https://help.github.com/articles/ignoring files for more about ignoring files.
 
 # dependencies
 /node_modules
@@ -40,12 +40,19 @@ next-env.d.ts
 /.wrangler/
 # Checkout-local execution profile and tool state; never publish them.
 /.sites-runtime/
-/.agents/
+/.agents/*
+!/.agents/skills/
 /.codex/
 /outputs/
 /work/
 !/.env.example
 *.tsbuildinfo
+
+# Worktree dizinleri (coding-agent-skill izole calisma alanlari)
+.worktrees/
+.claude/worktrees/
+.claude/settings.local.json
+CLAUDE.local.md
 
 # Cloudflare kaynak kimlikleri (hesaba özel)
 /.cloudflare.json
