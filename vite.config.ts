@@ -13,15 +13,25 @@ const { d1, r2 } = hostingConfig;
 const isCodexSeatbeltSandbox = process.env.CODEX_SANDBOX === "seatbelt";
 const managedLinux = readExecutionProfile() === "managed-linux";
 
+// Cloudflare'e kendi hesabınla yayın: scripts/deploy-cloudflare.mjs bu değişkenleri doldurur.
+// Tanımlı değilse yerel önizleme için yer tutucu adlar kullanılır.
+const cf = {
+  worker: process.env.CF_WORKER_NAME,
+  d1Name: process.env.CF_D1_NAME || "site-creator-d1",
+  d1Id: process.env.CF_D1_ID || SITE_CREATOR_PLACEHOLDER_DATABASE_ID,
+  r2: process.env.CF_R2_BUCKET || "site-creator-r2",
+};
+
 const localBindingConfig = {
+  ...(cf.worker ? { name: cf.worker } : {}),
   main: "vinext/server/fetch-handler",
   compatibility_flags: ["nodejs_compat"],
   d1_databases: d1
     ? [
         {
           binding: d1,
-          database_name: "site-creator-d1",
-          database_id: SITE_CREATOR_PLACEHOLDER_DATABASE_ID,
+          database_name: cf.d1Name,
+          database_id: cf.d1Id,
         },
       ]
     : [],
@@ -29,7 +39,7 @@ const localBindingConfig = {
     ? [
         {
           binding: r2,
-          bucket_name: "site-creator-r2",
+          bucket_name: cf.r2,
         },
       ]
     : [],

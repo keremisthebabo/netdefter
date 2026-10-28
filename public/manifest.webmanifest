@@ -1,12 +1,12 @@
 {
-  "name": "Net Defterim · YKS 2028",
+  "name": "Net Defterim · YKS ders çalışma programı",
   "short_name": "Net Defterim",
   "description": "Deneme yanlışları, çözümler, aralıklı tekrar ve aylık rapor.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#f7f9fb",
+  "background_color": "#1b1f23",
   "theme_color": "#086d64",
   "lang": "tr",
   "icons": [

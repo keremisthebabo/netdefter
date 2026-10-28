@@ -1,0 +1,4 @@
+import {bindings} from '@/lib/server';
+import {googleReady,randomToken,appOrigin} from '@/lib/auth';
+// Google ile giriş: Google'ın izin ekranına yönlendirir. state değeri kısa ömürlü çerezde saklanır (CSRF koruması).
+export async function GET(req:Request){const origin=appOrigin(req);if(!googleReady())return Response.redirect(origin+'/?auth_error=google_off',302);const state=randomToken(24);const u=new URL('https://accounts.google.com/o/oauth2/v2/auth');u.search=new URLSearchParams({client_id:bindings().GOOGLE_CLIENT_ID!,redirect_uri:origin+'/api/auth/google/callback',response_type:'code',scope:'openid email profile',state,prompt:'select_account'}).toString();const secure=origin.startsWith('https:')?'; Secure':'';return new Response(null,{status:302,headers:{Location:u.toString(),'Set-Cookie':`nd_oauth=${state}; Path=/api/auth/google; HttpOnly; SameSite=Lax; Max-Age=600${secure}`}})}

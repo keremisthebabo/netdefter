@@ -1,0 +1,12 @@
+import {db,bindings,readCookie,ensureSchema} from '@/lib/server';
+import {createSession,createUser,normalizeEmail,googleReady,registrationOpen,appOrigin} from '@/lib/auth';
+// Google dönüşü: kodu belirteçle değiştirir, doğrulanmış e-postayı alır, hesabı bulur/bağlar/oluşturur ve oturum açar.
+export async function GET(req:Request){const origin=appOrigin(req);const fail=(code:string)=>new Response(null,{status:302,headers:{Location:`${origin}/?auth_error=${code}`,'Set-Cookie':'nd_oauth=; Path=/api/auth/google; HttpOnly; SameSite=Lax; Max-Age=0'}});
+ try{if(!googleReady())return fail('google_off');const url=new URL(req.url);const state=url.searchParams.get('state')||'';const code=url.searchParams.get('code')||'';const saved=readCookie(req,'nd_oauth');if(url.searchParams.get('error'))return fail('google_cancel');if(!code||!state||state!==saved)return fail('google_state');
+  const tr=await fetch('https://oauth2.googleapis.com/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({code,client_id:bindings().GOOGLE_CLIENT_ID!,client_secret:bindings().GOOGLE_CLIENT_SECRET!,redirect_uri:origin+'/api/auth/google/callback',grant_type:'authorization_code'}),signal:AbortSignal.timeout(15000)});if(!tr.ok)return fail('google_token');const tok=await tr.json() as {access_token?:string};
+  const ur=await fetch('https://openidconnect.googleapis.com/v1/userinfo',{headers:{Authorization:'Bearer '+tok.access_token},signal:AbortSignal.timeout(15000)});if(!ur.ok)return fail('google_profile');const info=await ur.json() as {sub?:string;email?:string;email_verified?:boolean;name?:string};
+  if(!info.sub||!info.email||!info.email_verified)return fail('google_email');await ensureSchema();const email=normalizeEmail(info.email);
+  let row=await db().prepare('SELECT id FROM users WHERE google_sub=?').bind(info.sub).first();
+  if(!row){row=await db().prepare('SELECT id FROM users WHERE email=?').bind(email).first();if(row)await db().prepare('UPDATE users SET google_sub=? WHERE id=?').bind(info.sub,String(row.id)).run()}
+  let id=row?String(row.id):'';if(!id){if(!registrationOpen())return fail('closed');id=(await createUser({email,name:(info.name||email.split('@')[0]).slice(0,60),googleSub:info.sub})).id}
+  const cookie=await createSession(req,id);const h=new Headers({Location:origin+'/'});h.append('Set-Cookie',cookie);h.append('Set-Cookie','nd_oauth=; Path=/api/auth/google; HttpOnly; SameSite=Lax; Max-Age=0');return new Response(null,{status:302,headers:h})}catch{return fail('google_error')}}

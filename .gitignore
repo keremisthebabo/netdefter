@@ -46,3 +46,8 @@ next-env.d.ts
 /work/
 !/.env.example
 *.tsbuildinfo
+
+# Cloudflare kaynak kimlikleri (hesaba özel)
+/.cloudflare.json
+# Betik kayıtları
+/*-log.txt

@@ -1,8 +1,12 @@
 import {subjects as subjectList,type MistakeType} from './topics';
 export {topicTree,normalizeTopic,mistakeTypes,mebTopics,topicOptions,topicMeta,mebGrades} from './topics';
-export const ownerName='Yusuf Kaya';
 export type Profile={name:string;grade:'9'|'10'|'11'|'12'|'Mezun';target:string;examYear:number;examDate:string;motto:string;dailyGoal:number;school:string};
-export const defaultProfile:Profile={name:ownerName,grade:'10',target:'',examYear:2028,examDate:'2028-06-17',motto:'Her yanlış, bir sonraki doğruya.',dailyGoal:0,school:''};
+// YKS haziranın üçüncü cumartesi/pazar haftasonu yapılır; ÖSYM açıklayana kadar tahmini tarih: haziranın 3. cumartesisi.
+export function estimatedExamDate(year:number){const d=new Date(Date.UTC(year,5,1));const first=(6-d.getUTCDay()+7)%7+1;return `${year}-06-${String(first+14).padStart(2,'0')}`}
+// Sınıfa göre hedef YKS yılı: eğitim yılı temmuzda değişir. 12. sınıf/mezun → bu eğitim yılının haziranı.
+export function defaultExamYear(grade:string,now=new Date()){const base=now.getUTCMonth()>=6?now.getUTCFullYear()+1:now.getUTCFullYear();const g=Number(grade);return Number.isFinite(g)&&g>=9&&g<=12?base+(12-g):base}
+export function profileFor(name:string,grade:Profile['grade']='12'):Profile{const y=defaultExamYear(grade);return {name,grade,target:'',examYear:y,examDate:estimatedExamDate(y),motto:'Her yanlış, bir sonraki doğruya.',dailyGoal:0,school:''}}
+export const defaultProfile:Profile=profileFor('','12');
 // Türkçe iyelik eki: Yusuf → Yusuf'un, Ayşe → Ayşe'nin, Ali → Ali'nin, Ahmet → Ahmet'in
 export function genitive(name:string){const n=name.trim();const v=[...n.toLocaleLowerCase('tr')].reverse().find(c=>'aeıioöuü'.includes(c))||'e';const suffix=('aı'.includes(v)?'ın':'ei'.includes(v)?'in':'ou'.includes(v)?'un':'ün');const lastIsVowel='aeıioöuü'.includes(n.toLocaleLowerCase('tr').slice(-1));return `${n}'${lastIsVowel?'n':''}${suffix}`}
 export const initials=(name:string)=>name.trim().split(/\s+/).map(w=>w[0]||'').join('').slice(0,2).toLocaleUpperCase('tr');
@@ -37,6 +41,4 @@ export function wrongsPerExam(rows:Question[]){const map=new Map<string,{exam:st
 export const exportColumns=['Tarih','Deneme','Sınav','Ders','Konu','Hata türü','Soru','Cevabım','Cevap anahtarı','Çözüm sonucu','Çözüm','Kritik nokta','Tekrar notu','Video','Tekrar aşaması','Sıradaki tekrar','Durum'];
 export function exportRows(rows:Question[]):(string|number)[][]{return rows.map(q=>[q.date,q.exam,q.exam_type,q.subject,q.topic,q.mistake_type||'yanlış',q.question,q.my_answer,q.answer_key,q.analysis?.answer||'',q.analysis?.steps?.join('\n')||'',q.analysis?.pitfall||'',q.analysis?.note||'',q.analysis?.videos?.[0]?.url||'',reviewStageLabel(q),q.next_review||'',q.reviewed?'Tekrar edildi':'Tekrar bekliyor'])}
 export function csv(rows:Question[]){const cell=(v:unknown)=>{let s=String(v??'');if(/^[\s]*[=+@-]/.test(s))s="'"+s;return '"'+s.replaceAll('"','""')+'"'};return '\uFEFF'+[exportColumns,...exportRows(rows)].map(r=>r.map(cell).join(';')).join('\r\n')}
-// YKS 2028 için varsayılan sınav tarihi (ÖSYM takvimi açıklandığında Ayarlar'dan değiştirilebilir).
-export const defaultExamDate='2028-06-17';
 export function daysUntil(date:string,from=today()){return Math.round((Date.parse(date+'T00:00:00Z')-Date.parse(from+'T00:00:00Z'))/86400000)}

@@ -3,13 +3,13 @@ import {useEffect,useState} from 'react';
 import {Sparkles,LoaderCircle,NotebookPen,Trash2,Printer,RefreshCw,ArrowUpRight,Wand2} from 'lucide-react';
 import {toast} from 'sonner';
 import {subjects,examTypes,topicMeta,type StudyNote} from '@/lib/study';
-import {useStudy,Choice,TopicSelect,Empty,api,postJson,dates,readSetting,writeSetting} from './shared';
+import {useStudy,Choice,TopicSelect,Empty,api,postJson,dates,readSetting,writeSetting,QuotaNote} from './shared';
 import {subjectClass} from './archive';
 export function NotesView({preset}:{preset:{subject:string;topic:string;examType?:string}|null}){const s=useStudy();const {ai}=s;
  const [notes,setNotes]=useState<StudyNote[]>([]),[loading,setLoading]=useState(true),[busy,setBusy]=useState(false),[subject,setSubject]=useState(preset?.subject||readSetting('notesSubject','Matematik')),[topic,setTopic]=useState(preset?.topic||''),[examType,setExamType]=useState(preset?.examType||readSetting('lastExamType','TYT')),[selected,setSelected]=useState<StudyNote|null>(null),[prompt,setPrompt]=useState('');
  useEffect(()=>{let c=false;api('/api/notes').then(d=>{if(c)return;setNotes(d.notes||[]);if(preset){const hit=(d.notes||[]).find((n:StudyNote)=>n.subject===preset.subject&&n.topic===preset.topic);if(hit)setSelected(hit)}}).catch(e=>toast.error(e.message)).finally(()=>{if(!c)setLoading(false)});return()=>{c=true}},[preset]);
  useEffect(()=>{if(preset){setSubject(preset.subject);setTopic(preset.topic);if(preset.examType)setExamType(preset.examType)}},[preset]);
- async function generate(target?:{subject:string;topic:string;examType?:string},extra=''){const t=target||{subject,topic,examType};if(!t.topic){toast.error('Önce menüden bir konu seç.');return}setBusy(true);try{const d=await postJson('/api/notes',{subject:t.subject,topic:t.topic,examType:t.examType||undefined,prompt:extra});setNotes(list=>[d.note!,...list.filter(n=>n.id!==d.note!.id)]);setSelected(d.note!);setPrompt('');toast.success(extra?'Not, isteğine göre yeniden hazırlandı.':'Ders notu hazır.')}catch(e){toast.error((e as Error).message)}finally{setBusy(false)}}
+ async function generate(target?:{subject:string;topic:string;examType?:string},extra=''){const t=target||{subject,topic,examType};if(!t.topic){toast.error('Önce menüden bir konu seç.');return}setBusy(true);try{const d=await postJson('/api/notes',{subject:t.subject,topic:t.topic,examType:t.examType||undefined,prompt:extra});setNotes(list=>[d.note!,...list.filter(n=>n.id!==d.note!.id)]);setSelected(d.note!);setPrompt('');s.bumpUsage('note');toast.success(extra?'Not, isteğine göre yeniden hazırlandı.':'Ders notu hazır.')}catch(e){toast.error((e as Error).message)}finally{setBusy(false)}}
  async function remove(n:StudyNote){setBusy(true);try{await api('/api/notes/'+n.id,{method:'DELETE'});setNotes(list=>list.filter(x=>x.id!==n.id));if(selected?.id===n.id)setSelected(null);toast.success('Not silindi.')}catch(e){toast.error((e as Error).message)}finally{setBusy(false)}}
  function print(){window.print()}
  const meta=selected?topicMeta(selected.subject,selected.topic):null;
@@ -17,8 +17,8 @@ export function NotesView({preset}:{preset:{subject:string;topic:string;examType
   <article className="panel"><span className="eyebrow">KONUYU SEÇ, NOTU YAPAY ZEKÂ HAZIRLASIN</span><h2>Yeni ders notu</h2><p className="muted description">Ders ve MEB öğretim programındaki konuyu seç; not, Maarif Modeli içerik çerçevesine ve senin o konudaki yanlışlarına göre hazırlanır. Sonra alttan ek istek yazarak notu değiştirebilirsin.</p>
    <div className="form-grid"><label>Ders<Choice label="Ders" value={subject} onChange={v=>{setSubject(v);setTopic('');writeSetting('notesSubject',v)}} values={subjects}/></label><label>Sınav / sınıf<Choice label="Sınav türü" value={examType} onChange={setExamType} values={[...examTypes]}/></label></div>
    <label className="field-label">Konu<TopicSelect subject={subject} examType={examType} value={topic} onChange={setTopic}/></label>
-   <button className="primary full" disabled={busy||!topic||!ai} onClick={()=>void generate()}>{busy?<LoaderCircle className="spin" size={18}/>:<Sparkles size={18}/>} Notu hazırla</button>
-   {!ai&&<p className="inline-note">Not üretimi için yapay zekâ bağlantısı gerekiyor. <button onClick={()=>s.setView('settings')}>Ayarları aç</button></p>}
+   <button className="primary full" disabled={busy||!topic||!ai} onClick={()=>void generate()}>{busy?<LoaderCircle className="spin" size={18}/>:<Sparkles size={18}/>} Notu hazırla</button><QuotaNote kind="note"/>
+   {!ai&&<p className="inline-note">Yapay zekâ ders notu bu sunucuda şu an kapalı.</p>}
    <div className="section-heading notes-list-head"><h3>Kayıtlı notlar</h3><span className="muted">{notes.length}</span></div>
    {loading?<p className="loading"><LoaderCircle className="spin" size={18}/> Yükleniyor…</p>:notes.length?<ul className="note-list">{notes.map(n=><li key={n.id} className={selected?.id===n.id?'on':''}><button onClick={()=>setSelected(n)}><span className={subjectClass(n.subject)}>{n.subject}</span><strong>{n.topic}</strong><small>{dates(n.updated_at.slice(0,10))}{n.exam_type?` · ${n.exam_type}`:''}</small></button></li>)}</ul>:<Empty title="Henüz not yok." icon={<NotebookPen size={30}/>}>İlk notunu hazırladığında burada listelenir.</Empty>}
   </article>

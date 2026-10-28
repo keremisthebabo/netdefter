@@ -1,4 +1,4 @@
-import {sqliteTable,text,integer,real,index,uniqueIndex} from 'drizzle-orm/sqlite-core';
+import {sqliteTable,text,integer,real,index,uniqueIndex,primaryKey} from 'drizzle-orm/sqlite-core';
 export const questions=sqliteTable('questions',{
  id:text('id').primaryKey(),userId:text('user_id').notNull(),exam:text('exam').notNull(),examType:text('exam_type').notNull(),date:text('date').notNull(),subject:text('subject').notNull(),topic:text('topic').notNull(),question:text('question').notNull(),myAnswer:text('my_answer').notNull().default(''),answerKey:text('answer_key').notNull().default(''),imageKey:text('image_key'),mime:text('mime'),analysis:text('analysis'),reviewed:integer('reviewed').notNull().default(0),createdAt:text('created_at').notNull(),analyzingAt:text('analyzing_at'),
  // Hata türü: yanlış | boş | emin değildim
@@ -18,3 +18,13 @@ export const videoCache=sqliteTable('video_cache',{id:text('id').primaryKey(),us
 export const studyNotes=sqliteTable('study_notes',{id:text('id').primaryKey(),userId:text('user_id').notNull(),subject:text('subject').notNull(),topic:text('topic').notNull(),examType:text('exam_type').notNull().default(''),content:text('content').notNull(),prompt:text('prompt').notNull().default(''),updatedAt:text('updated_at').notNull()},t=>[uniqueIndex('study_notes_user_topic').on(t.userId,t.subject,t.topic)]);
 // Kullanıcı profili (Ayarlar › Profil)
 export const profiles=sqliteTable('profiles',{userId:text('user_id').primaryKey(),name:text('name').notNull(),grade:text('grade').notNull().default('10'),target:text('target').notNull().default(''),examYear:integer('exam_year').notNull().default(2028),examDate:text('exam_date').notNull().default('2028-06-17'),motto:text('motto').notNull().default(''),dailyGoal:integer('daily_goal').notNull().default(0),school:text('school').notNull().default(''),updatedAt:text('updated_at').notNull()});
+// Hesaplar: e-posta + şifre (PBKDF2) ve/veya Google hesabı
+export const users=sqliteTable('users',{id:text('id').primaryKey(),email:text('email').notNull(),name:text('name').notNull(),passwordHash:text('password_hash'),passwordSalt:text('password_salt'),googleSub:text('google_sub'),createdAt:text('created_at').notNull(),lastLoginAt:text('last_login_at')},t=>[uniqueIndex('users_email').on(t.email),uniqueIndex('users_google_sub').on(t.googleSub)]);
+// Oturumlar: id = oturum belirtecinin SHA-256 özeti
+export const sessions=sqliteTable('sessions',{id:text('id').primaryKey(),userId:text('user_id').notNull(),createdAt:text('created_at').notNull(),expiresAt:text('expires_at').notNull(),userAgent:text('user_agent').notNull().default('')},t=>[index('sessions_user').on(t.userId)]);
+// Günlük yapay zekâ kullanım sayacı (kişi × gün × tür)
+export const aiUsage=sqliteTable('ai_usage',{userId:text('user_id').notNull(),day:text('day').notNull(),kind:text('kind').notNull(),count:integer('count').notNull().default(0)},t=>[primaryKey({columns:[t.userId,t.day,t.kind]})]);
+// Giriş/kayıt deneme sınırı
+export const authAttempts=sqliteTable('auth_attempts',{key:text('key').primaryKey(),count:integer('count').notNull().default(0),resetAt:text('reset_at').notNull()});
+// Kişisel ders çalışma programı: kurulum ayarları (JSON), tamamlanan dersler {dersSırası: tarih}, kaydırılan günler {gün: {date,topic}}
+export const studyPlans=sqliteTable('study_plans',{userId:text('user_id').primaryKey(),config:text('config').notNull(),done:text('done').notNull().default('{}'),offDays:text('off_days').notNull().default('{}'),createdAt:text('created_at').notNull(),updatedAt:text('updated_at').notNull()});
